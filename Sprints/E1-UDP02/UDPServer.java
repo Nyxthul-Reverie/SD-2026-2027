@@ -23,7 +23,7 @@ public class UDPServer {
 
         deliveredThisStep.clear();
 
-        // CASO 1:
+        
         // A mensagem recebida é exatamente a próxima esperada.
         if (nCurrentMessage == nLastMessageInOrder + 1) {
 

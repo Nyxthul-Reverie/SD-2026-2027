@@ -8,6 +8,8 @@ import java.util.Scanner;
 
 public class UDPClient {
 
+    private static int automaticCounter = 0;
+
     public static void main(String args[]) {
 
         DatagramSocket aSocket = null;
@@ -42,7 +44,8 @@ public class UDPClient {
                         runAutomaticMode(
                                 aSocket,
                                 aHost,
-                                serverPort
+                                serverPort,
+                                sc
                         );
 
                         break;
@@ -101,28 +104,34 @@ public class UDPClient {
     private static void runAutomaticMode(
             DatagramSocket socket,
             InetAddress host,
-            int serverPort) throws IOException {
-
-        String[] messages =
-                {"ola", "cruel", "mundo"};
+            int serverPort,
+            Scanner sc) throws IOException {
 
         System.out.println(
-                "Modo automatico: inicio do cenario normal."
+                "Insira a mensagem (ou 'sair' para voltar ao menu):"
         );
 
-        for (int i = 0; i < messages.length; i++) {
+        String message =
+                sc.nextLine();
 
-            sendMessage(
-                    socket,
-                    host,
-                    serverPort,
-                    i + 1,
-                    messages[i]
-            );
+        if (message.equalsIgnoreCase("sair")) {
+            return;
         }
 
-        System.out.println(
-                "Modo automatico: cenario concluido."
+        /*
+         * MODO AUTOMATICO
+         *
+         * O cliente atribui automaticamente:
+         * 1, 2, 3, 4...
+         */
+        automaticCounter++;
+
+        sendMessage(
+                socket,
+                host,
+                serverPort,
+                automaticCounter,
+                message
         );
     }
 
@@ -183,6 +192,14 @@ public class UDPClient {
             int number,
             String message) throws IOException {
 
+        /*
+         * Formato:
+         *
+         * N,mensagem
+         *
+         * Exemplo:
+         * 3,mundo
+         */
         String text =
                 number + "," + message;
 
@@ -224,8 +241,62 @@ public class UDPClient {
                         StandardCharsets.UTF_8
                 );
 
-        System.out.println(
-                "Resposta: " + serverAnswer
-        );
+        /*
+         * Caso o servidor ainda esteja à espera
+         * de uma mensagem anterior.
+         *
+         * Exemplo:
+         * waitingfor,2
+         */
+        if (serverAnswer.startsWith("waitingfor,")) {
+
+            String[] parts =
+                    serverAnswer.split(",", 2);
+
+            if (parts.length == 2) {
+
+                try {
+
+                    int expectedNumber =
+                            Integer.parseInt(
+                                    parts[1]
+                            );
+
+                    System.out.println(
+                            "Servidor esta a espera da mensagem numero: "
+                                    + expectedNumber
+                    );
+
+                } catch (NumberFormatException e) {
+
+                    System.out.println(
+                            "Resposta do servidor malformada."
+                    );
+                }
+
+            } else {
+
+                System.out.println(
+                        "Resposta do servidor malformada."
+                );
+            }
+
+        } else if (
+                serverAnswer.equals(
+                        "malformed message"
+                )) {
+
+            System.out.println(
+                    "Resposta: mensagem malformada."
+            );
+
+        } else {
+
+            System.out.println(
+                    "Resposta: " + serverAnswer
+            );
+        }
+
+        System.out.println();
     }
 }
