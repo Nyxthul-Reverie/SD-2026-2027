@@ -112,7 +112,10 @@ public class UDPClient {
 				System.out.println("Número inválido. Introduza um número entre 1 e 2147483647.");
 				continue;
 			}
-			sendMessage(host, number, message);
+			boolean confirmed = sendMessage(host, number, message);
+			if (confirmed && number > automaticCounter) {
+				automaticCounter = number;
+			}
 			return;
 		}
 	}
@@ -138,9 +141,9 @@ public class UDPClient {
 		return true;
 	}
 
-	private static void sendMessage(InetAddress host, int number, String message) throws IOException {
+	private static boolean sendMessage(InetAddress host, int number, String message) throws IOException {
 		if (!fitsDatagram(number, message)) {
-			return;
+			return false;
 		}
 		String text = number + "," + message;
 		System.out.println("Envio: " + text);
@@ -152,17 +155,20 @@ public class UDPClient {
 					+ "o servidor pode ter recebido a mensagem.");
 			throw e;
 		}
+		boolean confirmed = false;
 		if (response.equals(text)) {
 			System.out.println("Resposta: " + response);
+			confirmed = true;
 		} else if (response.startsWith("waitingfor,")) {
 			long expectedNumber = parseNextNumber(response.substring("waitingfor,".length()));
 			System.out.println("O servidor está à espera da mensagem número: " + expectedNumber);
 		} else if (response.equals("malformed message")) {
 			System.out.println("Resposta: mensagem malformada; estado do servidor preservado.");
 		} else {
-			throw new IOException("Resposta inesperada do servidor; entrega não confirmada.");
+			System.out.println("Resposta inesperada do servidor; entrega não confirmada.");
 		}
 		System.out.println();
+		return confirmed;
 	}
 
 	private static String sendAndReceive(InetAddress host, String text) throws IOException {
