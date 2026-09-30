@@ -2,301 +2,187 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.net.SocketException;
+import java.net.SocketTimeoutException;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.Locale;
 import java.util.Scanner;
 
 public class UDPClient {
-
-    private static int automaticCounter = 0;
-
-    public static void main(String args[]) {
-
-        DatagramSocket aSocket = null;
-
-        try {
-
-            aSocket = new DatagramSocket();
-
-            InetAddress aHost =
-                    InetAddress.getByName("localhost");
-
-            int serverPort = 6789;
-
-            Scanner sc =
-                    new Scanner(System.in);
-
-            boolean running = true;
-
-            while (running) {
-
-                System.out.println(
-                        "Escolha o modo: automatico (a), manual (m) ou sair (s):"
-                );
-
-                String option =
-                        sc.nextLine().trim();
-
-                switch (option.toLowerCase()) {
-
-                    case "a":
-
-                        runAutomaticMode(
-                                aSocket,
-                                aHost,
-                                serverPort,
-                                sc
-                        );
-
-                        break;
-
-                    case "m":
-
-                        runManualMode(
-                                aSocket,
-                                aHost,
-                                serverPort,
-                                sc
-                        );
-
-                        break;
-
-                    case "s":
-
-                        System.out.println(
-                                "A sair..."
-                        );
-
-                        running = false;
-
-                        break;
-
-                    default:
-
-                        System.out.println(
-                                "Opcao invalida. Insira 'a', 'm' ou 's'."
-                        );
-                }
-            }
-
-            sc.close();
-
-        } catch (SocketException e) {
-
-            System.out.println(
-                    "Socket: " + e.getMessage()
-            );
-
-        } catch (IOException e) {
-
-            System.out.println(
-                    "IO: " + e.getMessage()
-            );
-
-        } finally {
-
-            if (aSocket != null) {
-                aSocket.close();
-            }
-        }
-    }
-
-    private static void runAutomaticMode(
-            DatagramSocket socket,
-            InetAddress host,
-            int serverPort,
-            Scanner sc) throws IOException {
-
-        System.out.println(
-                "Insira a mensagem (ou 'sair' para voltar ao menu):"
-        );
-
-        String message =
-                sc.nextLine();
-
-        if (message.equalsIgnoreCase("sair")) {
-            return;
-        }
-
-        /*
-         * MODO AUTOMATICO
-         *
-         * O cliente atribui automaticamente:
-         * 1, 2, 3, 4...
-         */
-        automaticCounter++;
-
-        sendMessage(
-                socket,
-                host,
-                serverPort,
-                automaticCounter,
-                message
-        );
-    }
-
-    private static void runManualMode(
-            DatagramSocket socket,
-            InetAddress host,
-            int serverPort,
-            Scanner sc) throws IOException {
-
-        System.out.println(
-                "Insira a mensagem (ou 'sair' para voltar ao menu):"
-        );
-
-        String message =
-                sc.nextLine();
-
-        if (message.equalsIgnoreCase("sair")) {
-            return;
-        }
-
-        Integer number = null;
-
-        while (number == null) {
-
-            System.out.println(
-                    "Insira o numero da mensagem:"
-            );
-
-            String input =
-                    sc.nextLine().trim();
-
-            try {
-
-                number =
-                        Integer.parseInt(input);
-
-            } catch (NumberFormatException e) {
-
-                System.out.println(
-                        "Numero invalido. Insira um numero inteiro."
-                );
-            }
-        }
-
-        sendMessage(
-                socket,
-                host,
-                serverPort,
-                number,
-                message
-        );
-    }
-
-    private static void sendMessage(
-            DatagramSocket socket,
-            InetAddress host,
-            int serverPort,
-            int number,
-            String message) throws IOException {
-
-        /*
-         * Formato:
-         *
-         * N,mensagem
-         *
-         * Exemplo:
-         * 3,mundo
-         */
-        String text =
-                number + "," + message;
-
-        byte[] data =
-                text.getBytes(
-                        StandardCharsets.UTF_8
-                );
-
-        DatagramPacket request =
-                new DatagramPacket(
-                        data,
-                        data.length,
-                        host,
-                        serverPort
-                );
-
-        System.out.println(
-                "Envio: " + text
-        );
-
-        socket.send(request);
-
-        byte[] buffer =
-                new byte[1000];
-
-        DatagramPacket reply =
-                new DatagramPacket(
-                        buffer,
-                        buffer.length
-                );
-
-        socket.receive(reply);
-
-        String serverAnswer =
-                new String(
-                        reply.getData(),
-                        0,
-                        reply.getLength(),
-                        StandardCharsets.UTF_8
-                );
-
-        /*
-         * Caso o servidor ainda esteja à espera
-         * de uma mensagem anterior.
-         *
-         * Exemplo:
-         * waitingfor,2
-         */
-        if (serverAnswer.startsWith("waitingfor,")) {
-
-            String[] parts =
-                    serverAnswer.split(",", 2);
-
-            if (parts.length == 2) {
-
-                try {
-
-                    int expectedNumber =
-                            Integer.parseInt(
-                                    parts[1]
-                            );
-
-                    System.out.println(
-                            "Servidor esta a espera da mensagem numero: "
-                                    + expectedNumber
-                    );
-
-                } catch (NumberFormatException e) {
-
-                    System.out.println(
-                            "Resposta do servidor malformada."
-                    );
-                }
-
-            } else {
-
-                System.out.println(
-                        "Resposta do servidor malformada."
-                );
-            }
-
-        } else if (
-                serverAnswer.equals(
-                        "malformed message"
-                )) {
-
-            System.out.println(
-                    "Resposta: mensagem malformada."
-            );
-
-        } else {
-
-            System.out.println(
-                    "Resposta: " + serverAnswer
-            );
-        }
-
-        System.out.println();
-    }
+	private static final int SERVER_PORT = Integer.getInteger("udp.port", 6789);
+	private static final int MAX_DATAGRAM_BYTES = 1000;
+	private static final int TIMEOUT_MS = 2000;
+	private static int automaticCounter = 0;
+
+	public static void main(String[] args) {
+		if (SERVER_PORT < 1 || SERVER_PORT > 65535) {
+			System.out.println("Porta inválida. Use uma porta entre 1 e 65535.");
+			return;
+		}
+		try (Scanner sc = new Scanner(System.in)) {
+			InetAddress host = InetAddress.getByName("localhost");
+			while (true) {
+				String option = readLine(sc, "Escolha o modo: automático (a), manual (m) ou sair (s):");
+				if (option == null || option.trim().equalsIgnoreCase("s")
+						|| option.trim().equalsIgnoreCase("sair")) {
+					break;
+				}
+				try {
+					switch (option.trim().toLowerCase(Locale.ROOT)) {
+						case "a":
+							runAutomaticMode(host, sc);
+							break;
+						case "m":
+							runManualMode(host, sc);
+							break;
+						default:
+							System.out.println("Opção inválida. Insira 'a', 'm' ou 's'.");
+					}
+				} catch (IOException e) {
+					System.out.println("Falha de comunicação: " + e.getMessage());
+				}
+			}
+			System.out.println("A sair...");
+		} catch (IOException e) {
+			System.out.println("Erro de entrada/saída: " + e.getMessage());
+		}
+	}
+
+	private static String readLine(Scanner sc, String prompt) {
+		System.out.println(prompt);
+		if (!sc.hasNextLine()) {
+			if (sc.ioException() != null) {
+				System.out.println("Erro na leitura: " + sc.ioException().getMessage());
+			}
+			return null;
+		}
+		return sc.nextLine();
+	}
+
+	private static String readMessage(Scanner sc) {
+		while (true) {
+			String message = readLine(sc, "Insira a mensagem (ou 'sair' para voltar ao menu):");
+			if (message == null || message.trim().equalsIgnoreCase("sair")) {
+				return null;
+			}
+			if (message.isBlank()) {
+				System.out.println("A mensagem não pode estar vazia.");
+			} else if (message.getBytes(StandardCharsets.UTF_8).length > MAX_DATAGRAM_BYTES - 2) {
+				System.out.println("Mensagem demasiado longa: a mensagem completa (N,mensagem) tem um limite de 1000 bytes UTF-8.");
+			} else {
+				return message;
+			}
+		}
+	}
+
+	private static void runAutomaticMode(InetAddress host, Scanner sc) throws IOException {
+		String message = readMessage(sc);
+		if (message == null) {
+			return;
+		}
+		if (automaticCounter == Integer.MAX_VALUE) {
+			System.out.println("Numeração esgotada. Não é possível enviar outra mensagem automática.");
+			return;
+		}
+		int number = automaticCounter + 1;
+		if (!fitsDatagram(number, message)) {
+			return;
+		}
+		automaticCounter = number;
+		sendMessage(host, number, message);
+	}
+
+	private static void runManualMode(InetAddress host, Scanner sc) throws IOException {
+		String message = readMessage(sc);
+		if (message == null) {
+			return;
+		}
+		while (true) {
+			String input = readLine(sc, "Insira o número da mensagem (ou 'sair' para cancelar):");
+			if (input == null || input.trim().equalsIgnoreCase("sair")) {
+				return;
+			}
+			int number;
+			try {
+				number = Integer.parseInt(input.trim());
+				if (number < 1) {
+					throw new NumberFormatException();
+				}
+			} catch (NumberFormatException e) {
+				System.out.println("Número inválido. Introduza um número entre 1 e 2147483647.");
+				continue;
+			}
+			sendMessage(host, number, message);
+			return;
+		}
+	}
+
+	private static long parseNextNumber(String text) throws IOException {
+		try {
+			long number = Long.parseLong(text);
+			if (number < 1 || number > (long) Integer.MAX_VALUE + 1) {
+				throw new NumberFormatException();
+			}
+			return number;
+		} catch (NumberFormatException e) {
+			throw new IOException("Número inválido na resposta do servidor.");
+		}
+	}
+
+	private static boolean fitsDatagram(int number, String message) {
+		String text = number + "," + message;
+		if (text.getBytes(StandardCharsets.UTF_8).length > MAX_DATAGRAM_BYTES) {
+			System.out.println("Não enviada: a mensagem completa (N,mensagem) excede 1000 bytes UTF-8.");
+			return false;
+		}
+		return true;
+	}
+
+	private static void sendMessage(InetAddress host, int number, String message) throws IOException {
+		if (!fitsDatagram(number, message)) {
+			return;
+		}
+		String text = number + "," + message;
+		System.out.println("Envio: " + text);
+		String response;
+		try {
+			response = sendAndReceive(host, text);
+		} catch (IOException e) {
+			System.out.println("Entrega não confirmada. Não houve reenvio automático; "
+					+ "o servidor pode ter recebido a mensagem.");
+			throw e;
+		}
+		if (response.equals(text)) {
+			System.out.println("Resposta: " + response);
+		} else if (response.startsWith("waitingfor,")) {
+			long expectedNumber = parseNextNumber(response.substring("waitingfor,".length()));
+			System.out.println("O servidor está à espera da mensagem número: " + expectedNumber);
+		} else if (response.equals("malformed message")) {
+			System.out.println("Resposta: mensagem malformada; estado do servidor preservado.");
+		} else {
+			throw new IOException("Resposta inesperada do servidor; entrega não confirmada.");
+		}
+		System.out.println();
+	}
+
+	private static String sendAndReceive(InetAddress host, String text) throws IOException {
+		// Socket por pedido: uma resposta atrasada nao fica na fila do pedido seguinte.
+		try (DatagramSocket socket = new DatagramSocket()) {
+			socket.connect(host, SERVER_PORT);
+			socket.setSoTimeout(TIMEOUT_MS);
+			byte[] data = text.getBytes(StandardCharsets.UTF_8);
+			socket.send(new DatagramPacket(data, data.length, host, SERVER_PORT));
+			// O byte adicional permite detetar respostas maiores que o limite.
+			byte[] buffer = new byte[MAX_DATAGRAM_BYTES + 1];
+			DatagramPacket reply = new DatagramPacket(buffer, buffer.length);
+			socket.receive(reply);
+			if (reply.getLength() > MAX_DATAGRAM_BYTES) {
+				throw new IOException("Resposta demasiado longa.");
+			}
+			ByteBuffer receivedBytes = ByteBuffer.wrap(reply.getData(), reply.getOffset(), reply.getLength());
+			return StandardCharsets.UTF_8.newDecoder().decode(receivedBytes).toString();
+		} catch (SocketTimeoutException e) {
+			throw new IOException("Sem resposta em " + TIMEOUT_MS + " ms.", e);
+		}
+	}
 }
