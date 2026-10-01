@@ -10,7 +10,7 @@ import java.util.HashMap;
 public class UDPServer {
 
 	private static final int MAX_DATAGRAM_BYTES = 1000;
-	private static final int SERVER_PORT = Integer.getInteger("udp.port", 6789);
+	private static final int SERVER_PORT = 6789;
 	private static final String STATUS_REQUEST = "status";
 
 	private static final ArrayList<String> receivedMessages = new ArrayList<>();
@@ -90,10 +90,6 @@ public class UDPServer {
 	}
 
 	public static void main(String[] args) {
-		if (SERVER_PORT < 1 || SERVER_PORT > 65535) {
-			System.out.println("Porta inválida. Use uma porta entre 1 e 65535.");
-			return;
-		}
 		// L = numero da ultima mensagem entregue em ordem.
 		int L = 0;
 		try (DatagramSocket aSocket = new DatagramSocket(SERVER_PORT)) {

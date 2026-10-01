@@ -9,16 +9,13 @@ import java.util.Locale;
 import java.util.Scanner;
 
 public class UDPClient {
-	private static final int SERVER_PORT = Integer.getInteger("udp.port", 6789);
+	private static final int SERVER_PORT = 6789;
 	private static final int MAX_DATAGRAM_BYTES = 1000;
 	private static final int TIMEOUT_MS = 2000;
 	private static final String STATUS_REQUEST = "status";
 
 	public static void main(String[] args) {
-		if (SERVER_PORT < 1 || SERVER_PORT > 65535) {
-			System.out.println("Porta inválida. Use uma porta entre 1 e 65535.");
-			return;
-		}
+
 		try (Scanner sc = new Scanner(System.in)) {
 			InetAddress host = InetAddress.getByName("localhost");
 			try {
