@@ -12,7 +12,7 @@ public class UDPClient {
 	private static final int SERVER_PORT = Integer.getInteger("udp.port", 6789);
 	private static final int MAX_DATAGRAM_BYTES = 1000;
 	private static final int TIMEOUT_MS = 2000;
-	private static int automaticCounter = 0;
+	private static final String STATUS_REQUEST = "status";
 
 	public static void main(String[] args) {
 		if (SERVER_PORT < 1 || SERVER_PORT > 65535) {
@@ -21,6 +21,12 @@ public class UDPClient {
 		}
 		try (Scanner sc = new Scanner(System.in)) {
 			InetAddress host = InetAddress.getByName("localhost");
+			try {
+				queryExpectedNumber(host);
+			} catch (IOException e) {
+				System.out.println("Não foi possível consultar o servidor: " + e.getMessage());
+				System.out.println("Pode tentar novamente no modo automático ou enviar em modo manual.");
+			}
 			while (true) {
 				String option = readLine(sc, "Escolha o modo: automático (a), manual (m) ou sair (s):");
 				if (option == null || option.trim().equalsIgnoreCase("s")
@@ -68,7 +74,8 @@ public class UDPClient {
 			if (message.isBlank()) {
 				System.out.println("A mensagem não pode estar vazia.");
 			} else if (message.getBytes(StandardCharsets.UTF_8).length > MAX_DATAGRAM_BYTES - 2) {
-				System.out.println("Mensagem demasiado longa: a mensagem completa (N,mensagem) tem um limite de 1000 bytes UTF-8.");
+				System.out.println(
+						"Mensagem demasiado longa: a mensagem completa (N,mensagem) tem um limite de 1000 bytes UTF-8.");
 			} else {
 				return message;
 			}
@@ -76,20 +83,17 @@ public class UDPClient {
 	}
 
 	private static void runAutomaticMode(InetAddress host, Scanner sc) throws IOException {
+		// O servidor pode ter avançado após envios manuais ou de outro cliente.
+		long expectedNumber = queryExpectedNumber(host);
+		if (expectedNumber > Integer.MAX_VALUE) {
+			System.out.println("Numeração esgotada no servidor. Não é possível enviar outra mensagem automática.");
+			return;
+		}
 		String message = readMessage(sc);
 		if (message == null) {
 			return;
 		}
-		if (automaticCounter == Integer.MAX_VALUE) {
-			System.out.println("Numeração esgotada. Não é possível enviar outra mensagem automática.");
-			return;
-		}
-		int number = automaticCounter + 1;
-		if (!fitsDatagram(number, message)) {
-			return;
-		}
-		automaticCounter = number;
-		sendMessage(host, number, message);
+		sendMessage(host, (int) expectedNumber, message);
 	}
 
 	private static void runManualMode(InetAddress host, Scanner sc) throws IOException {
@@ -112,12 +116,14 @@ public class UDPClient {
 				System.out.println("Número inválido. Introduza um número entre 1 e 2147483647.");
 				continue;
 			}
-			boolean confirmed = sendMessage(host, number, message);
-			if (confirmed && number > automaticCounter) {
-				automaticCounter = number;
-			}
+			sendMessage(host, number, message);
 			return;
 		}
+	}
+
+	private static long queryExpectedNumber(InetAddress host) throws IOException {
+		String response = sendAndReceive(host, STATUS_REQUEST);
+		return parseNextNumber(response);
 	}
 
 	private static long parseNextNumber(String text) throws IOException {
@@ -141,9 +147,9 @@ public class UDPClient {
 		return true;
 	}
 
-	private static boolean sendMessage(InetAddress host, int number, String message) throws IOException {
+	private static void sendMessage(InetAddress host, int number, String message) throws IOException {
 		if (!fitsDatagram(number, message)) {
-			return false;
+			return;
 		}
 		String text = number + "," + message;
 		System.out.println("Envio: " + text);
@@ -155,20 +161,17 @@ public class UDPClient {
 					+ "o servidor pode ter recebido a mensagem.");
 			throw e;
 		}
-		boolean confirmed = false;
 		if (response.equals(text)) {
 			System.out.println("Resposta: " + response);
-			confirmed = true;
 		} else if (response.startsWith("waitingfor,")) {
-			long expectedNumber = parseNextNumber(response.substring("waitingfor,".length()));
-			System.out.println("O servidor está à espera da mensagem número: " + expectedNumber);
+			parseNextNumber(response.substring("waitingfor,".length()));
+			System.out.println("Resposta: " + response);
 		} else if (response.equals("malformed message")) {
 			System.out.println("Resposta: mensagem malformada; estado do servidor preservado.");
 		} else {
-			System.out.println("Resposta inesperada do servidor; entrega não confirmada.");
+			throw new IOException("Resposta inesperada do servidor; entrega não confirmada.");
 		}
 		System.out.println();
-		return confirmed;
 	}
 
 	private static String sendAndReceive(InetAddress host, String text) throws IOException {

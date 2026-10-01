@@ -11,6 +11,7 @@ public class UDPServer {
 
 	private static final int MAX_DATAGRAM_BYTES = 1000;
 	private static final int SERVER_PORT = Integer.getInteger("udp.port", 6789);
+	private static final String STATUS_REQUEST = "status";
 
 	private static final ArrayList<String> receivedMessages = new ArrayList<>();
 	private static final HashMap<Integer, String> temporaryMessages = new HashMap<>();
@@ -103,27 +104,36 @@ public class UDPServer {
 			while (true) {
 				DatagramPacket request = new DatagramPacket(buffer, buffer.length);
 				aSocket.receive(request);
-				deliveredThisStep.clear();
+				boolean statusRequest = false;
 				String received = "[datagrama inválido]";
 				String response = "malformed message";
 				try {
 					if (request.getLength() > MAX_DATAGRAM_BYTES) {
 						throw new IllegalArgumentException("O datagrama excede 1000 bytes.");
 					}
-					ByteBuffer receivedBytes = ByteBuffer.wrap(request.getData(), request.getOffset(), request.getLength());
+					ByteBuffer receivedBytes = ByteBuffer.wrap(request.getData(), request.getOffset(),
+							request.getLength());
 					received = StandardCharsets.UTF_8.newDecoder().decode(receivedBytes).toString();
-					String[] parts = received.split(",", 2);
-					if (parts.length != 2 || parts[1].isBlank()) {
-						throw new IllegalArgumentException("Formato esperado: N,mensagem.");
+					if (received.equals(STATUS_REQUEST)) {
+						// A consulta apenas lê L: não entrega nem guarda mensagens.
+						statusRequest = true;
+						response = Long.toString((long) L + 1);
+					} else {
+						deliveredThisStep.clear();
+						String[] parts = received.split(",", 2);
+						if (parts.length != 2 || parts[1].isBlank()) {
+							throw new IllegalArgumentException("Formato esperado: N,mensagem.");
+						}
+						int N = Integer.parseInt(parts[0].trim());
+						if (N < 1) {
+							throw new IllegalArgumentException("N deve ser positivo.");
+						}
+						int oldL = L;
+						L = processDeliveredMessages(L, N, parts[1]);
+						response = L == oldL ? "waitingfor," + ((long) L + 1) : received;
 					}
-					int N = Integer.parseInt(parts[0].trim());
-					if (N < 1) {
-						throw new IllegalArgumentException("N deve ser positivo.");
-					}
-					int oldL = L;
-					L = processDeliveredMessages(L, N, parts[1]);
-					response = L == oldL ? "waitingfor," + ((long) L + 1) : received;
 				} catch (CharacterCodingException | IllegalArgumentException e) {
+					deliveredThisStep.clear();
 					System.out.println("Mensagem malformada; estado preservado. " + e.getMessage());
 				}
 				try {
@@ -131,7 +141,9 @@ public class UDPServer {
 				} catch (IOException e) {
 					System.out.println("Não foi possível responder: " + e.getMessage());
 				}
-				printState(received, response, L);
+				if (!statusRequest) {
+					printState(received, response, L);
+				}
 			}
 		} catch (IOException e) {
 			System.out.println("Erro de entrada/saída: " + e.getMessage());
