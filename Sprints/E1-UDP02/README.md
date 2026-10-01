@@ -8,16 +8,44 @@ a sequência, essas três mensagens têm de ser retransmitidas. Na UDP02 não s�
 necessárias essas retransmissões, porque as mensagens adiantadas ficam guardadas
 temporariamente até poderem ser entregues em ordem.
 
-O servidor utiliza duas estruturas:
+O servidor utiliza duas estruturas persistentes:
 
-- `ArrayList<String>` para a lista de receção, porque a operação principal é
-  acrescentar ao fim as mensagens entregues em ordem;
-- `HashMap<Integer, String>` para as mensagens temporárias, porque permite
-  procurar diretamente uma mensagem através do seu número.
+- `ArrayList<String> receivedMessages` para a lista de receção, porque a
+  operação principal é acrescentar ao fim as mensagens entregues em ordem;
+- `HashMap<Integer, String> temporaryMessages` para as mensagens temporárias,
+  porque permite procurar diretamente uma mensagem através do seu número.
+
+O servidor utiliza ainda `ArrayList<String> deliveredThisStep` como estrutura
+auxiliar. Esta lista é limpa antes do processamento de cada datagrama normal e
+contém apenas as mensagens entregues nesse passo. Não representa o estado
+persistente da lista de receção.
 
 Uma mensagem recebida já chegou ao servidor. Uma mensagem entregue já pôde ser
 passada à aplicação na ordem correta. Assim, uma mensagem pode ter sido recebida
 e continuar temporariamente guardada sem ter sido entregue.
+
+A ordem de apresentação dos elementos de um `HashMap` não é garantida. Nos
+exemplos seguintes interessa o conteúdo da estrutura, não a ordem visual das
+suas entradas.
+
+## 4.2 Processamento das mensagens
+
+O método `processDeliveredMessages` mantém `L` como o número da última mensagem
+entregue em ordem e trata três casos:
+
+- se `N == L + 1`, a mensagem é entregue, adicionada a `receivedMessages` e a
+  `deliveredThisStep`, e `L` é atualizado. Em seguida, são procuradas e
+  entregues em cascata as mensagens consecutivas existentes em
+  `temporaryMessages`. Cada mensagem entregue na cascata é removida da
+  estrutura temporária;
+- se `N > L + 1`, a mensagem chegou adiantada e é guardada em
+  `temporaryMessages`. O método usa `putIfAbsent`, pelo que uma mensagem com o
+  mesmo número não substitui a primeira que ficou guardada;
+- se `N <= L`, a mensagem é duplicada ou antiga e é ignorada, sem alterar as
+  estruturas persistentes.
+
+O método devolve o valor final de `L`, incluindo qualquer avanço provocado pela
+entrega em cascata.
 
 ## 4.3 Verificação
 
@@ -29,6 +57,9 @@ e continuar temporariamente guardada sem ter sido entregue.
 | `2,cruel` | `2,cruel` | 2 | `{}` | `[2,cruel]` |
 | `3,mundo` | `3,mundo` | 3 | `{}` | `[3,mundo]` |
 
+No final, a lista de receção é
+`[1,ola, 2,cruel, 3,mundo]` e a estrutura temporária está vazia.
+
 ### Sequência com desordenação múltipla
 
 | Mensagem enviada | Resposta recebida | L após processamento | Estrutura temporária | Mensagens entregues neste passo | Justificação |
@@ -37,16 +68,15 @@ e continuar temporariamente guardada sem ter sido entregue.
 | `3,mundo` | `waitingfor,2` | 1 | `{3=mundo}` | `[]` | A próxima mensagem esperada era a 2. A mensagem 3 chega fora de ordem, fica guardada temporariamente e `L` mantém-se em 1. |
 | `4,tudo bem` | `waitingfor,2` | 1 | `{3=mundo, 4=tudo bem}` | `[]` | Continua a faltar a mensagem 2, por isso a mensagem 4 também fica guardada temporariamente e `L` mantém-se em 1. |
 | `2,cruel` | `2,cruel` | 4 | `{}` | `[2,cruel, 3,mundo, 4,tudo bem]` | É a mensagem esperada. A sua entrega permite entregar em cascata as mensagens 3 e 4 que estavam guardadas, fazendo `L` passar para 4. |
-| `3,mundo` | `waitingfor,5` | 4 | `{3=mundo}` | `[]` | É um duplicado de uma mensagem já entregue. Como `3 != L + 1`, fica na estrutura temporária e o servidor responde `waitingfor,5`. |
+| `3,mundo` | `waitingfor,5` | 4 | `{}` | `[]` | É um duplicado de uma mensagem já entregue. Como `3 <= L`, é ignorado e o servidor responde que espera a mensagem 5. |
 
 No final desta sequência:
 
 - lista de receção: `[1,ola, 2,cruel, 3,mundo, 4,tudo bem]`;
-- estrutura temporária: `{3=mundo}`.
+- estrutura temporária: `{}`.
 
-O último elemento da estrutura temporária é o duplicado de uma mensagem já
-entregue. Este resultado corresponde à limitação que deve ser analisada na
-reflexão crítica.
+O último `3,mundo` não é novamente entregue nem guardado, porque o código atual
+ignora mensagens cujo número seja menor ou igual a `L`.
 
 ## 4.4 Reflexão crítica
 
@@ -70,9 +100,9 @@ chegar e indicar o mecanismo que seria necessário.
 
 **Resposta do estudante:** se uma mensagem em falta nunca chegar, as mensagens
 posteriores ficam guardadas na estrutura temporária e não podem ser entregues.
-Como a solução atual não tem timeout nem mecanismo de expiração, podem ficar
-guardadas indefinidamente. Uma possível melhoria seria definir um limite de
-tempo ou uma política para remover mensagens demasiado antigas.
+Como a solução atual não tem timeout nem mecanismo de expiração no servidor,
+podem ficar guardadas indefinidamente. Uma possível melhoria seria definir um
+limite de tempo ou uma política para remover mensagens demasiado antigas.
 
 ### Crescimento da estrutura temporária
 
@@ -88,14 +118,16 @@ um limite de mensagens temporárias.
 ### Duplicados
 
 Distinguir um duplicado de uma mensagem já entregue de um duplicado de uma
-mensagem ainda temporariamente guardada e indicar a verificação em falta.
+mensagem ainda temporariamente guardada.
 
-**Resposta do estudante:** a solução não trata completamente os duplicados. Se
-uma mensagem for repetida enquanto ainda está na estrutura temporária, o mesmo
-número utiliza a mesma chave no `HashMap` e o valor anterior é substituído. Se
-a mensagem já tiver sido entregue, como aconteceu com o segundo `3,mundo`, é
-considerada fora de ordem e volta a ser guardada temporariamente. Faltaria uma
-verificação para ignorar mensagens com número menor ou igual a `L`.
+**Resposta do estudante:** se uma mensagem já entregue voltar a chegar, o seu
+número será menor ou igual a `L` e a mensagem será ignorada. Não volta a entrar
+em `temporaryMessages` e não é novamente acrescentada a `receivedMessages`.
+
+Se uma mensagem for repetida enquanto ainda está na estrutura temporária,
+`putIfAbsent` mantém o primeiro conteúdo associado ao número e não o substitui
+pelo conteúdo do duplicado. A solução não verifica se os dois conteúdos são
+iguais nem sinaliza ao cliente esse conflito; limita-se a preservar o primeiro.
 
 ### Múltiplos clientes
 
@@ -111,7 +143,44 @@ desordenação — são resolvidas pelo mecanismo e quais continuam por resolver
 
 **Resposta do estudante:** a desordenação é melhor tratada nesta solução,
 porque as mensagens adiantadas deixam de ser descartadas e passam a ser
-guardadas até poderem ser entregues por ordem. A duplicação continua apenas
-parcialmente tratada. A perda definitiva não é resolvida, porque, se uma
-mensagem nunca chegar, o servidor fica à espera. A corrupção também não é
-resolvida por este mecanismo, embora o programa valide o formato das mensagens.
+guardadas até poderem ser entregues por ordem. Os duplicados já entregues são
+ignorados e um duplicado temporário não substitui o primeiro conteúdo guardado,
+embora conteúdos diferentes associados ao mesmo número não sejam comparados.
+A perda definitiva não é resolvida, porque, se uma mensagem nunca chegar, o
+servidor fica à espera. A corrupção também não é resolvida em termos de
+integridade do conteúdo, embora o programa valide o tamanho, a codificação
+UTF-8 e o formato das mensagens.
+
+## Funcionalidades adicionais de hardening
+
+As funcionalidades desta secção reforçam a robustez e a utilização da solução,
+mas não alteram a lógica principal de ordenação da UDP02.
+
+### Consulta `status` e modo automático
+
+O cliente envia o datagrama especial `status` e o servidor responde apenas com
+o próximo número esperado, ou seja, `L + 1`. A consulta não chama
+`processDeliveredMessages` e não altera `L`, `receivedMessages`,
+`temporaryMessages` ou `deliveredThisStep`.
+
+O cliente consulta o estado ao iniciar e antes de cada envio automático. No
+modo automático, usa a resposta como número da nova mensagem e pede ao
+utilizador apenas o conteúdo. Não existe um `automaticCounter` local. Esta
+consulta é necessária porque um envio manual ou uma entrega em cascata pode
+alterar o próximo número esperado pelo servidor.
+
+O modo manual continua a permitir escolher explicitamente o número da mensagem,
+possibilitando testar sequências desordenadas como `1, 3, 4, 2, 3`.
+
+### Mensagens malformadas
+
+O servidor responde `malformed message` quando recebe:
+
+- um datagrama sem o formato `N,mensagem`;
+- um valor de `N` não numérico ou menor que 1;
+- uma mensagem vazia ou composta apenas por espaços;
+- dados que não formem uma sequência UTF-8 válida;
+- um datagrama com mais de 1000 bytes.
+
+Nestes casos, `L`, `receivedMessages` e `temporaryMessages` são preservados,
+`deliveredThisStep` fica vazio e o servidor continua ativo.
