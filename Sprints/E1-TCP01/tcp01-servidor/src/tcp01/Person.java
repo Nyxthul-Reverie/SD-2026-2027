@@ -17,4 +17,12 @@ public class Person implements Serializable {
     public String getName() {
         return name;
     }
+
+    public Place getPlace() {
+        return place;
+    }
+
+    public int getYear() {
+        return year;
+    }
 }

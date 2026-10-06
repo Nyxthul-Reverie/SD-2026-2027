@@ -3,15 +3,22 @@ package tcp01;
 import java.io.*;
 import java.net.*;
 
-public class TCPClient{
+public class TCPClient {
     public static void main(String[] args) {
         Socket s = null;
         try {
             int serverPort = 7896;
             s = new Socket("localhost", serverPort);
+
+            ObjectOutputStream oos = new ObjectOutputStream(s.getOutputStream());
             DataInputStream in = new DataInputStream(s.getInputStream());
-            DataOutputStream out = new DataOutputStream(s.getOutputStream());
-            out.writeUTF("mensagem em UTF");
+
+            Place place = new Place("4000-001", "Porto");
+            Person person = new Person("Ana", place, 1995);
+
+            oos.writeObject(person);
+            oos.flush();
+
             String data = in.readUTF();
             System.out.println("Received: " + data);
         } catch (UnknownHostException e) {

@@ -4,14 +4,14 @@ import java.io.*;
 import java.net.*;
 
 public class Connection extends Thread {
-    DataInputStream in;
+    ObjectInputStream in;
     DataOutputStream out;
     Socket clientSocket;
 
     public Connection(Socket aClientSocket) {
         try {
             clientSocket = aClientSocket;
-            in = new DataInputStream(clientSocket.getInputStream());
+            in = new ObjectInputStream(clientSocket.getInputStream());
             out = new DataOutputStream(clientSocket.getOutputStream());
             this.start();
         } catch (IOException e) {
@@ -22,10 +22,15 @@ public class Connection extends Thread {
     @Override
     public void run() {
         try {
-            String data = in.readUTF();
-            out.writeUTF(data);
+            Object object = in.readObject();
+            Person person = (Person) object;
+            String locality = person.getPlace().getLocality();
+            out.writeUTF(locality);
+            out.flush();
         } catch (EOFException e) {
             System.out.println("EOF: " + e.getMessage());
+        } catch (ClassNotFoundException e) {
+            System.out.println("ClassNotFound: " + e.getMessage());
         } catch (IOException e) {
             System.out.println("IO: " + e.getMessage());
         } finally {
