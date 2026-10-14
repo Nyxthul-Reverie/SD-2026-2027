@@ -1,21 +1,21 @@
-# E1-COMINDIR01 / REP01 — entrega e verificação
+# E1-COMINDIR01 / REP01: implementação e testes
 
-Fonte da tarefa: [Sprint E1-COMINDIR01, issue 14](https://github.com/cunhaestgv/SD-2026-2027/issues/14). Ensaios realizados em 14/10/2026, no mesmo computador Windows, com Java 23 e Kubo 0.43.1. Os valores abaixo são observações desta máquina e desta execução.
+A tarefa está descrita na [issue 14 do Sprint E1-COMINDIR01](https://github.com/cunhaestgv/SD-2026-2027/issues/14). Os testes foram feitos em 14/10/2026, num computador Windows, com Java 23 e Kubo 0.43.1. Os tempos e as perdas registados abaixo são os que se observaram nestes testes.
 
 ## 1. O que foi implementado
 
-Há dois projetos Java independentes, ambos no pacote `rep01`:
+O código está dividido em dois projetos Java, ambos no pacote `rep01`:
 
 - `rep01-lider`: `SensorRecord`, `RecordFile`, `MulticastLeader`, `IpfsPubSub`, `PubSubLeader`;
 - `rep01-replica`: `SensorRecord`, `RecordFile`, `MulticastReplica`, `IpfsPubSub`, `PubSubReplica`.
 
-`SensorRecord.toLine()` produz `seq;sensor;temperatura;instante`. O líder é o único que cria novos registos e atribui `seq`: lê o último número de `lider.txt`, incrementa-o, escreve o registo no seu ficheiro e só depois o propaga. As réplicas mantêm `replica-<id>.txt`.
+`SensorRecord.toLine()` representa cada registo como `seq;sensor;temperatura;instante`. Só o líder cria registos e atribui números de sequência (`seq`). Para isso, lê o último número de `lider.txt`, soma um, escreve o novo registo no ficheiro e só depois o envia. Cada réplica escreve no seu `replica-<id>.txt`.
 
 O líder multicast envia um datagrama UDP para `230.0.0.1:6789`. O líder PubSub publica a mesma linha de texto no tópico `rep01-temperaturas` através da API HTTP do seu daemon Kubo. Em ambos, `rajada <n>` gera `n` registos `SIM`, com temperaturas aleatórias entre 15 e 30 °C, e propaga um registo de cada vez, sem pausas deliberadas.
 
-As duas réplicas aplicam a mesma regra: `seq == last + 1` vai para o ficheiro; `seq <= last` ou já retido é duplicado; `seq > last + 1` fica numa `TreeMap` até chegarem os anteriores. Após uma escrita, a réplica procura sucessivamente `last + 1` na árvore. Registos textuais inválidos são rejeitados e a réplica continua à escuta. Não há ACK, retransmissão nem recuperação de uma réplica atrasada.
+Nos dois transportes, as réplicas tratam a ordem da mesma forma. Se chegar `last + 1`, escrevem o registo no ficheiro. Se o número já tiver sido escrito ou guardado à espera, ignoram o duplicado. Se faltar algum número anterior, guardam o registo numa `TreeMap`. Depois de cada escrita, verificam se o próximo número já está nessa estrutura e, se estiver, escrevem-no também. Uma mensagem mal formada é rejeitada sem parar a escuta. Não foram implementados ACK, retransmissão nem recuperação de réplicas atrasadas.
 
-Para `SIM`, cada réplica mostra o instante da primeira e da última receção, o total de mensagens recebidas, o total escrito no ficheiro e quantas estão retidas. Uma receção duplicada aumenta `recebidos`, mas não altera `last`, a árvore ou o ficheiro. Como o protocolo não contém um marcador de fim de rajada, os números apresentados são acumulados durante a execução; cada ensaio abaixo começou com processos e ficheiros novos.
+Para os registos `SIM`, cada réplica mostra a hora da primeira e da última receção, quantas mensagens recebeu, quantas escreveu e quantas estão à espera. Um duplicado conta como recebido, mas não muda `last`, a `TreeMap` nem o ficheiro. Não há uma mensagem especial a assinalar o fim da rajada; por isso, os contadores são acumulados enquanto o programa corre. Cada ensaio começou com processos e ficheiros novos.
 
 ## 2. Execução
 
@@ -70,7 +70,7 @@ O segundo nó foi inicializado num repositório IPFS separado (`.ipfs-no2`), com
 
 ## 3. Testes funcionais
 
-No multicast, a sequência de chegada `1, 3, 3, 2` produziu quatro receções, três escritas, uma mensagem `EM ESPERA`, uma `DUPLICADO` e a aplicação em cascata de `3` depois de `2`. O ficheiro final continha `1, 2, 3` pela ordem correta. Uma mensagem inválida produziu `REJEITADO` e não terminou a escuta.
+No teste multicast, foi enviada a sequência `1, 3, 3, 2`. Houve quatro receções, mas apenas três escritas: o primeiro `3` ficou `EM ESPERA`, o segundo foi marcado como `DUPLICADO` e, quando chegou o `2`, o `3` guardado também foi escrito. O ficheiro ficou com `1, 2, 3`. Uma mensagem inválida foi marcada como `REJEITADO` e a réplica continuou à escuta.
 
 Com um só nó Kubo, um registo normal seguido de `rajada 10` produziu 11 linhas no líder e em cada uma das três réplicas. Os quatro ficheiros tinham o mesmo SHA-256. Com dois nós ligados, um ensaio curto confirmou a passagem de mensagens para as réplicas do segundo nó, mas essas réplicas só receberam cinco dos 11 registos. `seq 6` a `10` não chegaram, enquanto `11` chegou e ficou retido. Isto demonstra que a ligação entre nós funciona, mas não garante entrega completa.
 
@@ -78,7 +78,7 @@ Quando a réplica 2 foi parada após os primeiros cinco registos e reiniciada de
 
 ## 4. Rajadas de 1000 registos
 
-Cada ensaio usou um diretório vazio, um líder, três réplicas e uma nova execução de `rajada 1000`. O tempo de envio é `último envio - primeiro envio`. O débito do líder é `1000 / tempo de envio em segundos`. A latência é `última receção da réplica mais lenta - primeiro envio do líder`. Os relógios são comparáveis porque tudo correu na mesma máquina.
+Cada ensaio começou num diretório vazio, com um líder e três réplicas, e executou `rajada 1000`. O tempo de envio foi calculado entre o primeiro e o último envio do líder. O débito é `1000 / tempo de envio em segundos`. A latência vai do primeiro envio do líder à última receção da réplica mais lenta. Os processos correram na mesma máquina, por isso os instantes são comparáveis.
 
 | Cenário | Ensaio | Envio do líder (ms) | Débito (registos/s) | Latência até à réplica mais lenta (ms) | Resultado |
 |---|---:|---:|---:|---:|---|
@@ -96,7 +96,7 @@ Nos três ensaios com dois nós, as réplicas 2 e 3 perderam os mesmos cinco `se
 
 ### Tabela comparativa do ponto 16
 
-| Métrica | Multicast | PubSub — um nó | PubSub — dois nós |
+| Métrica | Multicast | PubSub (um nó) | PubSub (dois nós) |
 |---|---:|---:|---:|
 | Tempo médio de envio da rajada no líder | 1245,67 ms | 9222,00 ms | 22281,33 ms |
 | Latência média até à réplica mais lenta | 1567,33 ms | 9222,00 ms | 22296,67 ms |
@@ -110,7 +110,7 @@ Nos três ensaios com dois nós, as réplicas 2 e 3 perderam os mesmos cinco `se
 
 O menor tempo medido foi o multicast. No PubSub, cada `publish` é um pedido HTTP síncrono; o líder espera pela resposta do Kubo antes do próximo registo. No cenário de dois nós há ainda encaminhamento entre nós. As medições têm carga e estado de rede variáveis, portanto comparam estas execuções, não estabelecem um limite universal de desempenho.
 
-## 5. Falhas deliberadas — ponto 14
+## 5. Falhas deliberadas (ponto 14)
 
 Cada falha foi ensaiada isoladamente. As alterações temporárias ao endereço de grupo, tamanho do buffer e nome do tópico foram repostas no código final. Os ficheiros de saída dos ensaios foram criados em diretórios temporários separados.
 
@@ -125,7 +125,7 @@ Cada falha foi ensaiada isoladamente. As alterações temporárias ao endereço 
 | Réplica subscreveu `rep01-temp` | PubSub | Nenhuma exceção | Sim: líder e réplica correta com 3 linhas; réplica no tópico errado sem ficheiro | Tópicos diferentes não se cruzam e a ausência de mensagens pode ser silenciosa. |
 | Dois nós sem ligação, sem bootstrap e com MDNS desativado | PubSub | Nenhuma exceção; `swarm peers` mostrou 0 em ambos | Sim: líder com 3 linhas; réplica do outro nó sem ficheiro | O daemon aceitar a publicação não prova que outro nó a recebeu. Foram usados dois nós temporários isolados e parados após o ensaio. |
 
-## 6. Construções e garantias — ponto 15
+## 6. Construções e garantias (ponto 15)
 
 | Construção | Onde foi usada | O que garante neste código | O que continua sem garantia |
 |---|---|---|---|
@@ -138,21 +138,21 @@ Cada falha foi ensaiada isoladamente. As alterações temporárias ao endereço 
 | Daemon IPFS e API HTTP | `IpfsPubSub` e programas PubSub | O Java comunica com o seu nó e este participa na distribuição | Que os nós estejam ligados ou que cada réplica aplicou o registo |
 | Multibase | `IpfsPubSub.toMultibase()` e `fromMultibase()` | Codifica o tópico exigido pela API e descodifica os dados recebidos em JSON | Fiabilidade, ordem ou segurança da aplicação |
 
-## 7. Reflexão crítica — ponto 17
+## 7. Reflexão crítica (ponto 17)
 
-**Desempenho.** Nesta máquina, o multicast foi mais rápido. O líder multicast escreve no ficheiro e faz `send` UDP; o líder PubSub faz um pedido HTTP para cada registo e espera pela resposta do daemon. Com dois nós, a mensagem ainda atravessa uma ligação IPFS. A diferença medida não deve ser generalizada para todas as redes e configurações.
+**Desempenho.** Nestes testes, o multicast foi mais rápido. O líder faz um `send` UDP por registo, enquanto no PubSub faz um pedido HTTP e espera pela resposta do Kubo antes de continuar. Com dois nós, a mensagem também tem de passar de um Kubo para o outro. Os valores medidos não servem para afirmar que o multicast será sempre mais rápido em qualquer rede.
 
 **Escalabilidade.** Com 300 réplicas, o líder multicast continuaria a fazer um `send` por registo; a rede teria de distribuir as cópias aos membros e o tráfego em cada ligação dependeria da topologia. No PubSub, os nós encaminham mensagens para vizinhos por *gossip*: o emissor não faz 300 envios diretos, mas o tráfego total e a carga dos nós aumentam. O multicast IP geralmente não atravessa a Internet pública; o PubSub pode fazê-lo se os nós estiverem alcançáveis e ligados.
 
-**Fiabilidade.** As maiores perdas observadas ocorreram no ensaio PubSub com dois nós: cinco registos por réplica do segundo nó em cada rajada. `seq` identificou os números ausentes e impediu escritas fora de ordem. Não determinou o componente exato da perda nem trouxe esses registos de volta. A ausência de ACK significa que o líder não sabe se uma réplica escreveu.
+**Fiabilidade.** No teste PubSub com dois nós, cada réplica do segundo nó deixou de receber cinco registos por rajada. Os números `seq` permitiram ver exatamente quais faltavam e impediram que os seguintes fossem escritos fora de ordem. Não permitiram descobrir a causa exata da perda nem recuperar os registos. Sem ACK, o líder também não sabe se uma réplica os escreveu.
 
-**Recuperação.** Quando falta permanentemente um `seq`, o ficheiro da réplica para no último número contínuo e a `TreeMap` cresce com os posteriores. Recuperação automática exigiria um mecanismo adicional para pedir e obter os registos perdidos ou transferir estado, explicitamente fora do âmbito da ficha.
+**Recuperação.** Se um número nunca chegar, a réplica deixa de avançar no ficheiro. Os números posteriores ficam na `TreeMap` à espera. Para recuperar seria preciso pedir os registos em falta ou copiar o estado de outra máquina, o que fica fora do âmbito desta ficha.
 
-**Dependências e alcance.** Num edifício com rede local que suporta multicast, escolheria multicast para este protótipo pela simplicidade e pelos tempos medidos. Para sensores em várias cidades, escolheria PubSub, porque os nós IPFS podem ligar-se por redes IP normais; pagaria o custo dos daemons e da configuração. Em nenhum caso assumiria fiabilidade completa sem mecanismos adicionais.
+**Dependências e alcance.** Para este protótipo, dentro de um edifício cuja rede suporte multicast, escolheria multicast: é mais simples e teve melhores tempos nos testes. Para sensores em cidades diferentes, escolheria PubSub, que permite ligar nós IPFS por redes IP normais, embora exija instalar e configurar o Kubo. Nenhuma das opções garante, por si só, que todos os registos chegam.
 
-**Ponto único de falha.** Se o líder parar, ninguém atribui novos `seq` nem cria novos registos. Multicast e PubSub apenas transportam mensagens; nenhum elege substituto. Dois líderes simultâneos poderiam atribuir o mesmo `seq` a registos diferentes, exigindo coordenação fora da ficha.
+**Ponto único de falha.** Se o líder parar, deixam de existir novos registos e novos `seq`. Nem o multicast nem o PubSub escolhem outro líder. Também não bastaria iniciar um segundo líder ao mesmo tempo: os dois poderiam usar o mesmo número para registos diferentes.
 
-**Segurança.** Qualquer processo capaz de enviar para o grupo ou publicar no tópico pode tentar introduzir um registo forjado. As réplicas atuais validam o formato, não a identidade do emissor. O campo `from` do PubSub identifica o nó publicador e poderia ser verificado contra uma identidade autorizada, mas esta verificação não está implementada em `IpfsPubSub` nem substitui por si só uma política de autorização. Esta limitação deve ser assumida na apresentação.
+**Segurança.** As réplicas verificam o formato das mensagens, mas não confirmam quem as enviou. Alguém com acesso ao grupo multicast ou ao tópico PubSub poderia tentar enviar um registo falso. No PubSub existe um campo `from`, que identifica o nó publicador, mas o código não o usa para autorizar mensagens. Isso teria de ser acrescentado se o sistema fosse usado fora deste exercício.
 
 ## 8. Pontos para defesa oral
 
