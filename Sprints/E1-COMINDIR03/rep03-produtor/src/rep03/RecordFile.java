@@ -6,9 +6,11 @@ import java.nio.file.*;
 
 public class RecordFile {
     private final Path path;
+    private final int n;
 
-    public RecordFile(String fileName) {
+    public RecordFile(String fileName, int n) {
         this.path = Paths.get(fileName);
+        this.n = n;
     }
 
     // acrescenta uma linha ao fim do ficheiro (cria-o se não existir)
@@ -25,7 +27,7 @@ public class RecordFile {
         long last = 0;
         for (String line : Files.readAllLines(path, StandardCharsets.UTF_8)) {
             if (!line.isBlank()) {
-                last = SensorRecord.fromLine(line).getSeq();
+                last = SensorRecord.fromLine(line, n).getSeq();
             }
         }
         return last;

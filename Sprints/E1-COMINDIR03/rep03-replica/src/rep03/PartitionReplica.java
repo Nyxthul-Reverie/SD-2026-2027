@@ -19,6 +19,8 @@ import java.util.Set;
 import java.util.TreeMap;
 
 public class PartitionReplica {
+    private static final int N = 3;
+
     public static void main(String[] args) {
         if (args.length < 2 || args.length > 3) {
             System.out.println("Uso: PartitionReplica <id> <partições> [portoApi]");
@@ -62,7 +64,7 @@ public class PartitionReplica {
         List<PartitionState> states = new ArrayList<>();
         try {
             for (int k : partitions) {
-                states.add(new PartitionState(k, new RecordFile("replica-" + id + "-p" + k + ".txt"),
+                states.add(new PartitionState(k, new RecordFile("replica-" + id + "-p" + k + ".txt", N),
                         perda, descartar));
             }
         } catch (IOException | IllegalArgumentException e) {
@@ -87,10 +89,10 @@ public class PartitionReplica {
     }
 
     private static SensorRecord parseRecord(String line) {
-        if (line.trim().split(";", -1).length != 4) {
+        if (line.trim().split(";", -1).length != 6) {
             throw new IllegalArgumentException("Formato de registo inválido.");
         }
-        SensorRecord record = SensorRecord.fromLine(line);
+        SensorRecord record = SensorRecord.fromLine(line, N);
         if (record.getSeq() < 1 || record.getSensorId().isBlank() || !Double.isFinite(record.getTemperature())) {
             throw new IllegalArgumentException("Registo inválido.");
         }

@@ -60,7 +60,7 @@ public final class PartitionCheck {
                 valid = false;
             }
             List<String> lines = Files.readAllLines(path, StandardCharsets.UTF_8);
-            valid &= sequence(path, lines);
+            valid &= sequence(path, lines, partitioner.count());
             if (isLeader) {
                 if (leaders.put(k, lines) != null) {
                     System.out.println("ERRO: mais de um ficheiro de líder para p" + k);
@@ -83,7 +83,7 @@ public final class PartitionCheck {
             Set<String> sensors = new HashSet<>();
             for (String line : source) {
                 try {
-                    SensorRecord record = SensorRecord.fromLine(line);
+                    SensorRecord record = SensorRecord.fromLine(line, partitioner.count());
                     sensors.add(record.getSensorId());
                     if (partitioner.of(record.getSensorId()) != k) {
                         System.out.println("ERRO: sensor " + record.getSensorId() + " na partição errada p" + k);
@@ -118,13 +118,13 @@ public final class PartitionCheck {
         return valid;
     }
 
-    private static boolean sequence(Path path, List<String> lines) {
+    private static boolean sequence(Path path, List<String> lines, int n) {
         boolean valid = true;
         for (int i = 0; i < lines.size(); i++) {
             try {
                 String line = lines.get(i);
-                if (line.split(";", -1).length != 4) throw new IllegalArgumentException("formato inválido");
-                SensorRecord record = SensorRecord.fromLine(line);
+                if (line.split(";", -1).length != 6) throw new IllegalArgumentException("formato inválido");
+                SensorRecord record = SensorRecord.fromLine(line, n);
                 if (record.getSeq() != i + 1L || record.getSensorId().isBlank()
                         || !Double.isFinite(record.getTemperature())) {
                     throw new IllegalArgumentException("seq esperado=" + (i + 1L) + ", obtido=" + record.getSeq());
