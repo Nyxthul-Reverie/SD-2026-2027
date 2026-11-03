@@ -9,6 +9,13 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.ArrayList;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class PartitionLeader {
     static final String DEFAULT_ADDRESS = "127.0.0.1";
@@ -19,6 +26,9 @@ public class PartitionLeader {
     private long lastSeq;
     private long lamport;
     private VectorClock vector;
+    private final long inc = System.currentTimeMillis();
+    private long hb = 0;
+    private List<SensorRecord> pendentes = new ArrayList<>();
 
     private PartitionLeader(RecordFile file, int n) throws IOException {
         this.file = file;
@@ -79,6 +89,10 @@ public class PartitionLeader {
                     }
                 }, "entrada");
                 entrada.start();
+                ScheduledExecutorService timer = Executors.newSingleThreadScheduledExecutor();
+                timer.scheduleAtFixedRate(() -> leader.enviarLote(ps, k, endereco, porto),
+                        0, Wire.PERIODO_HB_MS, TimeUnit.MILLISECONDS);
+                Runtime.getRuntime().addShutdownHook(new Thread(timer::shutdownNow));
                 System.out.println("Líder p" + k + " pronto; recuperação TCP no porto " + porto);
 
                 while (true) {
@@ -129,27 +143,55 @@ public class PartitionLeader {
         try {
             SensorRecord record;
             synchronized (file) {
-                lamport = Math.max(lamport, messageLamport) + 1;
-                vector.merge(messageVector);                           // merge ao vetor EXEMPLO (1,2,3) com (2,1,4) -> (2,2,4)
-                vector.tick(k);                                       // incrementa a posição k do vetor para refletir o evento local exemplo k = 0, vetor (2,2,4) -> (3,2,4)
+                long nextLamport = Math.max(lamport, messageLamport) + 1;
+                VectorClock nextVector = vector.copy();
+                nextVector.merge(messageVector);
+                nextVector.tick(k);
 
                 long seq = lastSeq + 1;
 
-                if(vector.get(k) != seq){
-                    throw new IllegalStateException("V[" + k + "]=" + vector.get(k) + " diferente de seq=" + seq);
+                if(nextVector.get(k) != seq){
+                    throw new IllegalStateException("V[" + k + "]=" + nextVector.get(k) + " diferente de seq=" + seq);
                 }
 
-                record = SensorRecord.now(seq, sensor, temperature , lamport, vector.copy());
+                record = SensorRecord.now(seq, sensor, temperature, nextLamport, nextVector);
                 file.append(record);
+                lamport = nextLamport;
+                vector = nextVector;
                 lastSeq = record.getSeq();
+                pendentes.add(record);
                 System.out.println( "EVENTO: seq=" + record.getSeq() + " L=" + record.getLamport() + " V=" + record.getVector());
             }
-            ps.publish(Wire.topicData(k), Wire.reg(endereco, porto, record));
+        } catch (IOException | IllegalStateException e) {
+            System.out.println("Erro ao registar: " + e.getMessage());
+        }
+    }
+
+    private void enviarLote(IpfsPubSub ps, int k, String endereco, int porto) {
+        Batch lote;
+        synchronized (file) {
+            List<SensorRecord> fechados = pendentes;
+            pendentes = new ArrayList<>();
+            lote = new Batch(endereco, porto, inc, ++hb, lastSeq, fechados);
+        }
+        // HTTP pode demorar. As novas entradas já podem usar a lista seguinte.
+        try {
+            String message = lote.encode();
+            long instante = System.currentTimeMillis();
+            ps.publish(Wire.topicData(k), message);
+            String line = inc + ";" + lote.hb + ";" + instante + ";" + lote.lastSeq
+                    + ";" + lote.records.size() + ";" + message.getBytes(StandardCharsets.UTF_8).length;
+            Files.writeString(Path.of("hb-p" + k + ".txt"), line + System.lineSeparator(),
+                    StandardCharsets.UTF_8, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+            System.out.println("HEARTBEAT: hb=" + lote.hb + " n=" + lote.records.size()
+                    + " ultimoSeq=" + lote.lastSeq);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            System.out.println("Publicação interrompida: " + e.getMessage());
-        } catch (IOException e) {
-            System.out.println("Erro ao registar/publicar: " + e.getMessage());
+            System.out.println("Heartbeat interrompido: " + e.getMessage());
+        } catch (IOException | RuntimeException e) {
+            // Não reinserir o lote: o ficheiro permite recuperação TCP posterior.
+            // A exceção fica tratada para não cancelar as próximas execuções do timer.
+            System.out.println("Erro no heartbeat: " + e.getMessage());
         }
     }
 

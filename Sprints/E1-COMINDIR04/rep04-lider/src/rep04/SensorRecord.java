@@ -21,7 +21,9 @@ public class SensorRecord {
 
     // cria um registo com o instante atual (usado só pelo líder)
     public static SensorRecord now(long seq,  String sensorId, double temperature, long lamport, VectorClock vector) {
-        return new SensorRecord(seq, lamport, vector, sensorId, temperature, LocalDateTime.now().withNano(0).toString());
+        // Preservar milissegundos permite medir a espera no lote, mantendo o formato ISO.
+        return new SensorRecord(seq, lamport, vector, sensorId, temperature,
+                LocalDateTime.now().truncatedTo(java.time.temporal.ChronoUnit.MILLIS).toString());
     }
 
     // representação textual: é o que se guarda no ficheiro e o que se envia pela rede
