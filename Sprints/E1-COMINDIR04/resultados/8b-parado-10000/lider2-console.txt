@@ -1,0 +1,9 @@
+Líder p2 pronto; recuperação TCP no porto 7002
+HEARTBEAT: hb=1 n=0 ultimoSeq=0
+HEARTBEAT: hb=2 n=0 ultimoSeq=0
+HEARTBEAT: hb=3 n=0 ultimoSeq=0
+HEARTBEAT: hb=4 n=0 ultimoSeq=0
+HEARTBEAT: hb=5 n=0 ultimoSeq=0
+HEARTBEAT: hb=6 n=0 ultimoSeq=0
+HEARTBEAT: hb=7 n=0 ultimoSeq=0
+HEARTBEAT: hb=8 n=0 ultimoSeq=0
