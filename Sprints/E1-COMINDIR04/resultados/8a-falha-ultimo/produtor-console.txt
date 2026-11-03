@@ -1,0 +1,24 @@
+Pausa entre envios da rajada: 10 ms; <s> continua a ser o número de sensores.
+Produtor pronto. Formato: <sensor> <temperatura> | rajada <n> <s> | rajada-quente <n> <s> | sair
+> 1793735577711;RECEBIDO;p0;inc=1793735572676;hb=2;ultimoSeq=0;n=0;de=0;ate=0
+1793735578127;RECEBIDO;p1;inc=1793735573105;hb=2;ultimoSeq=0;n=0;de=0;ate=0
+1793735578541;RECEBIDO;p2;inc=1793735573520;hb=2;ultimoSeq=0;n=0;de=0;ate=0
+Publicado em rep04-in-p0: IN;S01;21.0;0;0,0,0 → p0
+> Publicado em rep04-in-p0: IN;S04;22.5;0;0,0,0 → p0
+> 1793735582694;RECEBIDO;p0;inc=1793735572676;hb=3;ultimoSeq=2;n=2;de=1;ate=2
+1793735583127;RECEBIDO;p1;inc=1793735573105;hb=3;ultimoSeq=0;n=0;de=0;ate=0
+1793735583540;RECEBIDO;p2;inc=1793735573520;hb=3;ultimoSeq=0;n=0;de=0;ate=0
+1793735587691;RECEBIDO;p0;inc=1793735572676;hb=4;ultimoSeq=2;n=0;de=0;ate=0
+Publicado em rep04-in-p0: IN;S01;21.4;0;0,0,0 → p0
+> 1793735588126;RECEBIDO;p1;inc=1793735573105;hb=4;ultimoSeq=0;n=0;de=0;ate=0
+1793735588535;RECEBIDO;p2;inc=1793735573520;hb=4;ultimoSeq=0;n=0;de=0;ate=0
+1793735593117;RECEBIDO;p1;inc=1793735573105;hb=5;ultimoSeq=0;n=0;de=0;ate=0
+1793735593535;RECEBIDO;p2;inc=1793735573520;hb=5;ultimoSeq=0;n=0;de=0;ate=0
+1793735598116;RECEBIDO;p1;inc=1793735573105;hb=6;ultimoSeq=0;n=0;de=0;ate=0
+1793735598534;RECEBIDO;p2;inc=1793735573520;hb=6;ultimoSeq=0;n=0;de=0;ate=0
+1793735603115;RECEBIDO;p1;inc=1793735573105;hb=7;ultimoSeq=0;n=0;de=0;ate=0
+1793735603424;SUSPEITA;p0;silencio_ms=15729
+1793735603534;RECEBIDO;p2;inc=1793735573520;hb=7;ultimoSeq=0;n=0;de=0;ate=0
+1793735603986;REINICIO;p0;inc=1793735572676->1793735603880
+1793735603987;RETOMA;p0;inc=1793735603880;hb=1
+1793735603990;RECEBIDO;p0;inc=1793735603880;hb=1;ultimoSeq=3;n=0;de=0;ate=0

@@ -1,0 +1,18 @@
+LOTES;p0;inc=1793735572676;total=4;vazios_pct=75.000;n_media=0.500;n_max=2.000;intervalo_media_ms=4996.333;intervalo_max_ms=4999.000
+LOTES;p0;inc=1793735603880;total=1;vazios_pct=100.000;n_media=0.000;n_max=0.000;intervalo_media_ms=NA;intervalo_max_ms=NA
+LOTES;p1;inc=1793735573105;total=7;vazios_pct=100.000;n_media=0.000;n_max=0.000;intervalo_media_ms=4998.000;intervalo_max_ms=5002.000
+LOTES;p2;inc=1793735573520;total=7;vazios_pct=100.000;n_media=0.000;n_max=0.000;intervalo_media_ms=4998.000;intervalo_max_ms=5003.000
+SUSPEITA;processador;p0;inc=1793735572676;instante=1793735602924;classe=FALHA_REAL;silencio_publicacao_ms=15235;detecao_ms=15186
+SUSPEITA;produtor;p0;inc=1793735572676;instante=1793735603424;classe=FALHA_REAL;silencio_publicacao_ms=15735;detecao_ms=15686
+SUSPEITA;replica1;p0;inc=1793735572676;instante=1793735602973;classe=FALHA_REAL;silencio_publicacao_ms=15284;detecao_ms=15235
+SUSPEITA;replica3;p0;inc=1793735572676;instante=1793735602973;classe=FALHA_REAL;silencio_publicacao_ms=15284;detecao_ms=15235
+LATENCIA;p0;amostras=8;media_ms=3104.000;max_ms=4090.000
+LATENCIA;p1;amostras=0;media_ms=NA;max_ms=NA
+LATENCIA;p2;amostras=0;media_ms=NA;max_ms=NA
+RESUMO;lotes=19;vazios=18;registos_transportados=2;falhas_reais=4;falsas_suspeitas=0;indeterminadas=0;HB_PERDIDO=0;RECUPERACAO=2;cabecalhos_incoerentes=0
+DETECAO;amostras=4;min_ms=15186.000;media_ms=15335.500;max_ms=15686.000
+BYTES;LOTE_total_por_registo=413.500;LOTE_com_dados_por_registo=62.500;REG_equivalente=61.000
+NOTAS: bytes UTF-8 da mensagem, sem HTTP/IPFS; REG equivalente usa 127.0.0.1 e 7000+k.
+Latências: primeira receção de cada registo por participante, agregadas por partição; TCP excluído.
+Falha real é a classificação operacional da ficha no intervalo observado, não uma prova de morte.
+NA significa ausência de amostras. Executar na máquina/fuso que produziu os logs.
