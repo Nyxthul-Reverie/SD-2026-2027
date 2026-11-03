@@ -24,10 +24,6 @@ public final class Wire {
         return "IN;" + sensor + ";" + temp + ";" + lamport + ";" + vector;
     }
 
-    public static String reg(String host, int port, SensorRecord r) {
-        return "REG;" + host + ";" + port + ";" + r.toLine();
-    }
-
     public static String type(String msg) {
         String m = msg.trim();
         int i = m.indexOf(';');
@@ -42,11 +38,4 @@ public final class Wire {
         return m.substring(m.indexOf(';') + 1);
     }
 
-    public static String[] regParts(String msg) {
-        String[] f = msg.trim().split(";", 4);
-        if (f.length != 4 || !f[0].equals("REG")) {
-            throw new IllegalArgumentException("REG mal formado: " + msg);
-        }
-        return new String[] { f[1], f[2], f[3] };
-    }
 }
