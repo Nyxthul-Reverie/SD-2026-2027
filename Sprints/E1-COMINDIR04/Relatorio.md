@@ -93,3 +93,53 @@ A contagem de mensagens inclui os alarmes como registos, não apenas as 300 leit
 Os intervalos ideais para deteção são ]2,4], ]10,16] e ]20,31] s, respetivamente. A média de 6,57 s com Δ=10 s não contradiz Δ/2: a rajada é curta e as chegadas não se distribuem uniformemente por todo o período.
 
 Para reproduzir, compilar com `./compilar.ps1` e executar `python testes/ensaios.py all --saida ensaios/nova-execucao`. A automatização inicia o Kubo isolado se necessário e termina apenas os processos que criou. Para agregar os dados: `python testes/resumir.py`. A suspensão usa a API do Windows e não é simulada por reinício.
+
+## 11. Reflexão crítica
+
+### Lote e latência
+
+Na rajada com Δ=5 s, os mesmos 325 registos precisariam de 325 mensagens REG. Foram publicados 15 LOTE, incluindo os vazios: menos 310 publicações, uma redução de 95,38%. O custo total medido passou de 78,397 bytes por registo no REG equivalente para 62,255 no LOTE, cerca de 20,59% menos. Considerando apenas lotes com dados, o custo foi 61,160 bytes por registo.
+
+A latência média de 2,390 s ficou próxima de Δ/2=2,5 s, mas isso não é uma garantia. Com Δ=1 s foi 0,501 s; com Δ=10 s foi 6,573 s. A fase do temporizador, a duração curta da rajada e os alarmes alteram a distribuição das chegadas.
+
+Um sistema de travagem ou um alarme que exija resposta imediata não deve aguardar até cinco segundos só para agrupar dados. Seria possível publicar dados logo à chegada ou por um limite de tamanho e manter heartbeats independentes. Essa separação seria uma extensão: a ficha exige que o LOTE seja também o heartbeat.
+
+### Escolha do TIMEOUT
+
+Na comparação de períodos, a deteção média foi 3,684 s, 14,690 s e 29,390 s para Δ=1,5,10 s, usando uma falha em cada configuração. Com as três repetições de Δ=5 s, a média foi calculada na tabela anterior. Aumentar o período e o timeout permite tolerar mais silêncio, mas atrasa a suspeita.
+
+A suspensão de p2 por 20 s provocou quatro falsas suspeitas com fator 3 e Δ=5 s. O processo retomou com a mesma incarnação e as leituras chegaram. A exatidão deixou de se verificar durante essa pausa: os participantes suspeitaram de um processo que retomou a execução. A completude diz respeito a uma falha acabar por ser suspeita e não implica deteção imediata.
+
+Com fator 1, a execução sem suspensão não produziu falsas suspeitas. O risco é maior porque o timeout coincide com o período nominal; uma pequena demora pode bastar. Não se pode garantir exatidão num sistema assíncrono sem um limite conhecido para os atrasos.
+
+### ultimoSeq e lacunas
+
+Em 8(a), a réplica tinha seq=2 e não chegou nenhum seq=4 que denunciasse a perda do 3. O líder reiniciado anunciou ultimoSeq=3 num lote vazio, permitindo pedir 3 por TCP. O dado estava no ficheiro, apesar de nunca ter sido publicado.
+
+Na alteração com ultimoSeq=0, o décimo lote de cada partição foi descartado com um registo. Os líderes conservaram esses registos, mas as seis cópias nas réplicas ficaram incompletas. Houve HB_PERDIDO ao chegar o heartbeat seguinte, mas zero RECUPERACAO. CausalCheck continuou sem violações porque os históricos dos líderes eram causalmente válidos.
+
+Basta que um lote vazio anuncie o limite correto para revelar a perda final. A ficha inclui o campo em todos os lotes. A recuperação só obtém registos efetivamente persistidos por um líder que esteja acessível.
+
+### Heartbeats e relógios lógicos
+
+Nesta aplicação, a aceitação de um IN cria um registo e incrementa a componente local V[k]. Um heartbeat apenas anuncia estado e publica registos já criados. Incrementar V[k] sem criar um seq faz os dois valores deixarem de coincidir.
+
+A alteração deliberada produziu V[0]=3 quando o próximo seq era 1. A verificação no líder rejeitou o registo antes da escrita. Na implementação correta, CausalCheck confirmou V[k]=seq e a condição de Lamport em todos os ensaios normais.
+
+Os relógios lógicos representam relações entre eventos, não segundos. A emissão dos lotes não altera as regras causais, mas a ordem em que os registos chegam ao processador pode mudar os valores concretos entre execuções.
+
+### Detetar não é recuperar
+
+Nas três repetições de 8(c), o produtor publicou para p1 81, 78 e 90 leituras normais. Os líderes aceitaram apenas 8, 4 e 11, respetivamente: perderam-se 73, 74 e 79 entradas nessa partição. Estas contagens excluem os alarmes. As réplicas recuperaram o que existia no ficheiro, mas não puderam recuperar leituras que nunca receberam seq.
+
+Para outro processo assumir a liderança seria necessário acordar quem tem essa autoridade, determinar o histórico válido e impedir que o líder antigo e o novo atribuíssem sequências ao mesmo tempo. Seria necessário um mecanismo de coordenação, como eleição e consenso, além de acesso ao estado persistido. Esses mecanismos estão expressamente fora do âmbito.
+
+O estado SUSPEITO apenas avisa. Não muda o destino do produtor, não bloqueia a aplicação de dados e não escolhe um substituto.
+
+### Medição e relógios físicos
+
+HeartbeatCheck subtrai instantes produzidos por JVMs diferentes. Os processos correram na mesma máquina e no mesmo fuso, utilizando o mesmo relógio de parede. A precisão em milissegundos foi preservada no SensorRecord. A comparação ficaria contaminada por diferenças de relógio se os processos estivessem em máquinas diferentes.
+
+O detetor não depende dessa comparação: subtrai duas leituras locais de nanoTime na mesma JVM. O valor absoluto de nanoTime não deve ser enviado para outra JVM como se fosse uma data universal.
+
+Mesmo na mesma máquina, a classificação operacional do checker tem limites: se não se observar retoma na mesma incarnação, a ficha manda classificá-la como falha real. A alteração que suprimiu lotes vazios produziu essa classificação apesar de os líderes estarem vivos. É necessário relacionar os logs com o ensaio realizado e não interpretar uma suspeita como prova de morte.
