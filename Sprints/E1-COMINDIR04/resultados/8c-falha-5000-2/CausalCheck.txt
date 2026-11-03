@@ -1,0 +1,10 @@
+Registos lidos: 238
+Violações V[k] == seq: 0
+Pares a → b: 0
+Pares b → a: 511
+Pares causalmente relacionados: 511
+Pares concorrentes: 13858
+Violações da condição de Lamport: 0
+Vetores iguais em eventos distintos: 0
+Pares concorrentes com L distinto: 13749 (99,21%)
+Vista Lamport: C:\Users\alves\Downloads\SDT\SD-2026-2027\Sprints\E1-COMINDIR04\resultados\8c-falha-5000-2\vista-lamport.txt

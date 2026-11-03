@@ -1,0 +1,333 @@
+Pausa entre envios da rajada: 10 ms; <s> continua a ser o número de sensores.
+Produtor pronto. Formato: <sensor> <temperatura> | rajada <n> <s> | rajada-quente <n> <s> | sair
+> 1793735810578;RECEBIDO;p0;inc=1793735805548;hb=2;ultimoSeq=0;n=0;de=0;ate=0
+1793735811022;RECEBIDO;p1;inc=1793735805998;hb=2;ultimoSeq=0;n=0;de=0;ate=0
+1793735811454;RECEBIDO;p2;inc=1793735806427;hb=2;ultimoSeq=0;n=0;de=0;ate=0
+Publicado em rep04-in-p1: IN;S05;25.738349611906585;0;0,0,0 → p1
+Publicado em rep04-in-p1: IN;S02;22.62467484025532;0;0,0,0 → p1
+Publicado em rep04-in-p0: IN;S04;25.525992134739283;0;0,0,0 → p0
+Publicado em rep04-in-p2: IN;S03;26.623824259304193;0;0,0,0 → p2
+Publicado em rep04-in-p1: IN;S05;17.05835490564777;0;0,0,0 → p1
+Publicado em rep04-in-p1: IN;S05;21.12689050320631;0;0,0,0 → p1
+Publicado em rep04-in-p0: IN;S07;17.816054749749934;0;0,0,0 → p0
+Publicado em rep04-in-p2: IN;S09;24.212812839416035;0;0,0,0 → p2
+Publicado em rep04-in-p0: IN;S07;25.624866135444556;0;0,0,0 → p0
+Publicado em rep04-in-p1: IN;S08;23.510954629716316;0;0,0,0 → p1
+Publicado em rep04-in-p0: IN;S10;17.307978828125353;0;0,0,0 → p0
+Publicado em rep04-in-p0: IN;S10;28.861936805780918;0;0,0,0 → p0
+Publicado em rep04-in-p1: IN;S02;16.248044988469474;0;0,0,0 → p1
+Publicado em rep04-in-p2: IN;S03;17.75839353874998;0;0,0,0 → p2
+Publicado em rep04-in-p1: IN;S05;28.78890711063557;0;0,0,0 → p1
+Publicado em rep04-in-p2: IN;S06;17.24397113582651;0;0,0,0 → p2
+Publicado em rep04-in-p0: IN;S10;21.70354946381108;0;0,0,0 → p0
+Publicado em rep04-in-p2: IN;S06;22.82795580336161;0;0,0,0 → p2
+Publicado em rep04-in-p2: IN;S03;21.781038390175844;0;0,0,0 → p2
+Publicado em rep04-in-p0: IN;S10;17.19517252607149;0;0,0,0 → p0
+Publicado em rep04-in-p0: IN;S04;17.169573040529777;0;0,0,0 → p0
+Publicado em rep04-in-p1: IN;S08;21.74178028123872;0;0,0,0 → p1
+Publicado em rep04-in-p0: IN;S07;19.634577139479156;0;0,0,0 → p0
+Publicado em rep04-in-p1: IN;S02;27.501097067112255;0;0,0,0 → p1
+Publicado em rep04-in-p2: IN;S06;22.639580297885953;0;0,0,0 → p2
+Publicado em rep04-in-p1: IN;S08;18.693864602213957;0;0,0,0 → p1
+Publicado em rep04-in-p1: IN;S08;20.292482216105185;0;0,0,0 → p1
+Publicado em rep04-in-p0: IN;S07;21.5488425985458;0;0,0,0 → p0
+Publicado em rep04-in-p0: IN;S04;28.308217576558782;0;0,0,0 → p0
+Publicado em rep04-in-p0: IN;S01;15.873168560951614;0;0,0,0 → p0
+Publicado em rep04-in-p2: IN;S06;28.200225779486537;0;0,0,0 → p2
+Publicado em rep04-in-p2: IN;S06;18.956926847465795;0;0,0,0 → p2
+Publicado em rep04-in-p1: IN;S02;15.428928239362973;0;0,0,0 → p1
+Publicado em rep04-in-p2: IN;S06;18.520279457855228;0;0,0,0 → p2
+Publicado em rep04-in-p1: IN;S08;28.19362462977619;0;0,0,0 → p1
+Publicado em rep04-in-p2: IN;S06;24.468775724315805;0;0,0,0 → p2
+Publicado em rep04-in-p1: IN;S02;23.552578621460512;0;0,0,0 → p1
+Publicado em rep04-in-p0: IN;S04;20.786604114868126;0;0,0,0 → p0
+Publicado em rep04-in-p1: IN;S08;27.814542082836965;0;0,0,0 → p1
+Publicado em rep04-in-p1: IN;S05;28.13141504860477;0;0,0,0 → p1
+Publicado em rep04-in-p0: IN;S07;29.293896954940973;0;0,0,0 → p0
+Publicado em rep04-in-p2: IN;S06;15.214147598921304;0;0,0,0 → p2
+Publicado em rep04-in-p0: IN;S07;19.958956728662134;0;0,0,0 → p0
+Publicado em rep04-in-p2: IN;S06;25.24834604019002;0;0,0,0 → p2
+Publicado em rep04-in-p0: IN;S04;17.7693712401506;0;0,0,0 → p0
+Publicado em rep04-in-p0: IN;S04;23.905751472199263;0;0,0,0 → p0
+Publicado em rep04-in-p0: IN;S07;16.52621315074435;0;0,0,0 → p0
+Publicado em rep04-in-p2: IN;S03;17.1687143326764;0;0,0,0 → p2
+Publicado em rep04-in-p0: IN;S01;26.304664819447503;0;0,0,0 → p0
+Publicado em rep04-in-p2: IN;S06;26.092080707038928;0;0,0,0 → p2
+Publicado em rep04-in-p2: IN;S09;25.924536095815643;0;0,0,0 → p2
+Publicado em rep04-in-p2: IN;S03;24.98096027054145;0;0,0,0 → p2
+Publicado em rep04-in-p0: IN;S04;20.13547679964607;0;0,0,0 → p0
+Publicado em rep04-in-p0: IN;S10;27.532604647735013;0;0,0,0 → p0
+Publicado em rep04-in-p2: IN;S06;23.399007620015148;0;0,0,0 → p2
+Publicado em rep04-in-p1: IN;S08;28.648410484727336;0;0,0,0 → p1
+Publicado em rep04-in-p0: IN;S07;28.10258087611915;0;0,0,0 → p0
+Publicado em rep04-in-p1: IN;S05;29.801392005092335;0;0,0,0 → p1
+Publicado em rep04-in-p0: IN;S01;27.827760198020226;0;0,0,0 → p0
+Publicado em rep04-in-p1: IN;S05;19.540108597370512;0;0,0,0 → p1
+Publicado em rep04-in-p0: IN;S01;25.264637117874102;0;0,0,0 → p0
+Publicado em rep04-in-p1: IN;S05;18.620969230864166;0;0,0,0 → p1
+Publicado em rep04-in-p0: IN;S01;24.414283418146262;0;0,0,0 → p0
+Publicado em rep04-in-p1: IN;S05;28.359187298639668;0;0,0,0 → p1
+Publicado em rep04-in-p2: IN;S09;16.182035010793964;0;0,0,0 → p2
+Publicado em rep04-in-p2: IN;S03;24.21309215049504;0;0,0,0 → p2
+Publicado em rep04-in-p0: IN;S04;28.763289949520235;0;0,0,0 → p0
+Publicado em rep04-in-p1: IN;S05;28.79280047090388;0;0,0,0 → p1
+Publicado em rep04-in-p2: IN;S09;18.137855721473265;0;0,0,0 → p2
+Publicado em rep04-in-p2: IN;S03;28.65650457143974;0;0,0,0 → p2
+Publicado em rep04-in-p0: IN;S04;28.72997479918549;0;0,0,0 → p0
+Publicado em rep04-in-p2: IN;S09;26.144939342260734;0;0,0,0 → p2
+Publicado em rep04-in-p2: IN;S03;25.80002416952887;0;0,0,0 → p2
+Publicado em rep04-in-p2: IN;S03;26.079238694161354;0;0,0,0 → p2
+Publicado em rep04-in-p0: IN;S04;29.883778332120542;0;0,0,0 → p0
+Publicado em rep04-in-p2: IN;S09;20.562158734633062;0;0,0,0 → p2
+Publicado em rep04-in-p2: IN;S03;16.849496394378395;0;0,0,0 → p2
+Publicado em rep04-in-p1: IN;S08;20.59538175342787;0;0,0,0 → p1
+Publicado em rep04-in-p2: IN;S03;20.024603569241638;0;0,0,0 → p2
+Publicado em rep04-in-p0: IN;S07;20.221434983961554;0;0,0,0 → p0
+Publicado em rep04-in-p0: IN;S07;25.72609040869529;0;0,0,0 → p0
+Publicado em rep04-in-p0: IN;S07;21.230419006923565;0;0,0,0 → p0
+Publicado em rep04-in-p0: IN;S01;26.169156435230754;0;0,0,0 → p0
+Publicado em rep04-in-p0: IN;S07;26.97116183250986;0;0,0,0 → p0
+Publicado em rep04-in-p2: IN;S06;22.215257696428033;0;0,0,0 → p2
+Publicado em rep04-in-p0: IN;S04;16.000137853167374;0;0,0,0 → p0
+Publicado em rep04-in-p2: IN;S09;27.415604077896283;0;0,0,0 → p2
+Publicado em rep04-in-p0: IN;S10;22.05596602122545;0;0,0,0 → p0
+Publicado em rep04-in-p1: IN;S05;27.72011579976077;0;0,0,0 → p1
+Publicado em rep04-in-p2: IN;S06;22.22880909009054;0;0,0,0 → p2
+Publicado em rep04-in-p1: IN;S08;21.86460979786562;0;0,0,0 → p1
+Publicado em rep04-in-p1: IN;S08;28.82198550309929;0;0,0,0 → p1
+Publicado em rep04-in-p2: IN;S09;15.353619191963595;0;0,0,0 → p2
+Publicado em rep04-in-p1: IN;S08;19.35407954279747;0;0,0,0 → p1
+Publicado em rep04-in-p0: IN;S01;15.983241825619315;0;0,0,0 → p0
+Publicado em rep04-in-p0: IN;S04;22.00300962354768;0;0,0,0 → p0
+Publicado em rep04-in-p0: IN;S07;25.83150605985702;0;0,0,0 → p0
+Publicado em rep04-in-p1: IN;S02;18.688137602064593;0;0,0,0 → p1
+Publicado em rep04-in-p1: IN;S08;17.744986736935868;0;0,0,0 → p1
+Publicado em rep04-in-p0: IN;S07;15.594100904739177;0;0,0,0 → p0
+Publicado em rep04-in-p1: IN;S05;18.44904903216504;0;0,0,0 → p1
+Publicado em rep04-in-p0: IN;S07;28.03461344429581;0;0,0,0 → p0
+Publicado em rep04-in-p2: IN;S06;18.254647676114367;0;0,0,0 → p2
+Publicado em rep04-in-p1: IN;S05;20.395758781803817;0;0,0,0 → p1
+Publicado em rep04-in-p0: IN;S07;21.35060874816447;0;0,0,0 → p0
+Publicado em rep04-in-p0: IN;S01;18.924042016530116;0;0,0,0 → p0
+Publicado em rep04-in-p0: IN;S01;27.202256100885577;0;0,0,0 → p0
+Publicado em rep04-in-p1: IN;S05;29.47925254449372;0;0,0,0 → p1
+Publicado em rep04-in-p2: IN;S06;25.033178966955113;0;0,0,0 → p2
+Publicado em rep04-in-p1: IN;S08;20.581154306916396;0;0,0,0 → p1
+Publicado em rep04-in-p0: IN;S04;20.106985007422068;0;0,0,0 → p0
+Publicado em rep04-in-p1: IN;S02;19.706471172543772;0;0,0,0 → p1
+Publicado em rep04-in-p2: IN;S09;24.511757194323746;0;0,0,0 → p2
+Publicado em rep04-in-p2: IN;S06;20.206693634705083;0;0,0,0 → p2
+Publicado em rep04-in-p0: IN;S07;16.272740173170774;0;0,0,0 → p0
+Publicado em rep04-in-p2: IN;S06;26.612648820521972;0;0,0,0 → p2
+Publicado em rep04-in-p0: IN;S10;19.279342784675865;0;0,0,0 → p0
+Publicado em rep04-in-p0: IN;S04;17.70478529414486;0;0,0,0 → p0
+Publicado em rep04-in-p1: IN;S05;17.43450272257845;0;0,0,0 → p1
+Publicado em rep04-in-p0: IN;S07;20.707913794090132;0;0,0,0 → p0
+Publicado em rep04-in-p0: IN;S10;23.847144441854077;0;0,0,0 → p0
+Publicado em rep04-in-p2: IN;S09;18.6522252967387;0;0,0,0 → p2
+Publicado em rep04-in-p0: IN;S07;29.122220782185295;0;0,0,0 → p0
+Publicado em rep04-in-p1: IN;S05;22.30715736145177;0;0,0,0 → p1
+Publicado em rep04-in-p0: IN;S01;18.996298251330245;0;0,0,0 → p0
+Publicado em rep04-in-p0: IN;S07;29.954617425596446;0;0,0,0 → p0
+Publicado em rep04-in-p0: IN;S04;28.591228350648898;0;0,0,0 → p0
+Publicado em rep04-in-p2: IN;S06;19.293774545407608;0;0,0,0 → p2
+Publicado em rep04-in-p1: IN;S02;28.42177976337475;0;0,0,0 → p1
+Publicado em rep04-in-p2: IN;S09;28.710385653863575;0;0,0,0 → p2
+Publicado em rep04-in-p2: IN;S03;20.189632265904194;0;0,0,0 → p2
+Publicado em rep04-in-p2: IN;S06;24.651009116146277;0;0,0,0 → p2
+Publicado em rep04-in-p2: IN;S03;24.228632303661392;0;0,0,0 → p2
+Publicado em rep04-in-p0: IN;S01;23.07981752457027;0;0,0,0 → p0
+Publicado em rep04-in-p0: IN;S04;22.069288750904114;0;0,0,0 → p0
+Publicado em rep04-in-p2: IN;S09;15.747741029543016;0;0,0,0 → p2
+Publicado em rep04-in-p0: IN;S07;27.04208854572169;0;0,0,0 → p0
+Publicado em rep04-in-p0: IN;S01;21.283000524498217;0;0,0,0 → p0
+Publicado em rep04-in-p1: IN;S05;22.15392474308552;0;0,0,0 → p1
+Publicado em rep04-in-p2: IN;S09;17.289476183630683;0;0,0,0 → p2
+Publicado em rep04-in-p2: IN;S06;22.6242845417119;0;0,0,0 → p2
+Publicado em rep04-in-p0: IN;S07;16.90655347283423;0;0,0,0 → p0
+Publicado em rep04-in-p0: IN;S01;24.102344490869186;0;0,0,0 → p0
+Publicado em rep04-in-p0: IN;S10;19.789036751998516;0;0,0,0 → p0
+Publicado em rep04-in-p0: IN;S07;16.924270470229857;0;0,0,0 → p0
+Publicado em rep04-in-p0: IN;S01;23.741212307085814;0;0,0,0 → p0
+Publicado em rep04-in-p2: IN;S06;20.133793758959886;0;0,0,0 → p2
+Publicado em rep04-in-p1: IN;S08;27.5772024757065;0;0,0,0 → p1
+Publicado em rep04-in-p1: IN;S05;29.013792615023576;0;0,0,0 → p1
+Publicado em rep04-in-p0: IN;S07;25.985618701319098;0;0,0,0 → p0
+Publicado em rep04-in-p2: IN;S09;26.89436142790492;0;0,0,0 → p2
+Publicado em rep04-in-p1: IN;S08;22.66654169261474;0;0,0,0 → p1
+Publicado em rep04-in-p2: IN;S09;22.233334502791706;0;0,0,0 → p2
+Publicado em rep04-in-p1: IN;S02;19.499123281933574;0;0,0,0 → p1
+Publicado em rep04-in-p1: IN;S08;17.056342777610844;0;0,0,0 → p1
+Publicado em rep04-in-p2: IN;S03;25.56031827473567;0;0,0,0 → p2
+Publicado em rep04-in-p0: IN;S10;29.961309158753565;0;0,0,0 → p0
+Publicado em rep04-in-p2: IN;S06;25.359283987813726;0;0,0,0 → p2
+Publicado em rep04-in-p1: IN;S05;19.96594084154371;0;0,0,0 → p1
+Publicado em rep04-in-p0: IN;S01;16.924206839817654;0;0,0,0 → p0
+Publicado em rep04-in-p1: IN;S02;15.359783600907537;0;0,0,0 → p1
+Publicado em rep04-in-p2: IN;S06;19.34736488138995;0;0,0,0 → p2
+Publicado em rep04-in-p0: IN;S07;17.938361339284626;0;0,0,0 → p0
+Publicado em rep04-in-p0: IN;S10;17.426192219770115;0;0,0,0 → p0
+Publicado em rep04-in-p1: IN;S05;24.394101820888025;0;0,0,0 → p1
+Publicado em rep04-in-p1: IN;S08;27.54493305202203;0;0,0,0 → p1
+Publicado em rep04-in-p1: IN;S05;24.683664170671925;0;0,0,0 → p1
+Publicado em rep04-in-p2: IN;S06;15.217308958568447;0;0,0,0 → p2
+Publicado em rep04-in-p1: IN;S05;20.78823171116298;0;0,0,0 → p1
+Publicado em rep04-in-p0: IN;S04;21.452260465474083;0;0,0,0 → p0
+Publicado em rep04-in-p2: IN;S09;16.912769800118046;0;0,0,0 → p2
+Publicado em rep04-in-p1: IN;S05;19.14362609842867;0;0,0,0 → p1
+Publicado em rep04-in-p1: IN;S08;18.795190002445676;0;0,0,0 → p1
+Publicado em rep04-in-p1: IN;S05;17.23832836658196;0;0,0,0 → p1
+Publicado em rep04-in-p2: IN;S09;15.392408392539128;0;0,0,0 → p2
+Publicado em rep04-in-p0: IN;S04;26.722180606392147;0;0,0,0 → p0
+Publicado em rep04-in-p0: IN;S10;27.93078045383492;0;0,0,0 → p0
+Publicado em rep04-in-p0: IN;S04;21.784650961110422;0;0,0,0 → p0
+Publicado em rep04-in-p2: IN;S06;25.202896506855133;0;0,0,0 → p2
+Publicado em rep04-in-p1: IN;S02;22.007514578952588;0;0,0,0 → p1
+Publicado em rep04-in-p1: IN;S02;19.852946823388688;0;0,0,0 → p1
+Publicado em rep04-in-p1: IN;S02;18.300862902015187;0;0,0,0 → p1
+Publicado em rep04-in-p1: IN;S08;29.70632495276896;0;0,0,0 → p1
+Publicado em rep04-in-p0: IN;S07;18.251383392338703;0;0,0,0 → p0
+Publicado em rep04-in-p1: IN;S05;20.347797069804493;0;0,0,0 → p1
+Publicado em rep04-in-p1: IN;S05;26.75710487245126;0;0,0,0 → p1
+Publicado em rep04-in-p0: IN;S10;15.89862173555899;0;0,0,0 → p0
+Publicado em rep04-in-p0: IN;S07;16.699447982199608;0;0,0,0 → p0
+Publicado em rep04-in-p0: IN;S10;18.901927561847607;0;0,0,0 → p0
+Publicado em rep04-in-p0: IN;S07;28.312936732323557;0;0,0,0 → p0
+Publicado em rep04-in-p1: IN;S02;15.4311685865806;0;0,0,0 → p1
+Publicado em rep04-in-p1: IN;S05;17.16188042048608;0;0,0,0 → p1
+Publicado em rep04-in-p2: IN;S06;29.35978766972351;0;0,0,0 → p2
+Publicado em rep04-in-p2: IN;S09;25.019120107101884;0;0,0,0 → p2
+Publicado em rep04-in-p2: IN;S09;27.32104272945857;0;0,0,0 → p2
+Publicado em rep04-in-p2: IN;S03;16.279452824637204;0;0,0,0 → p2
+Publicado em rep04-in-p0: IN;S10;25.960858511827333;0;0,0,0 → p0
+Publicado em rep04-in-p2: IN;S06;19.34961185424759;0;0,0,0 → p2
+Publicado em rep04-in-p1: IN;S08;17.288906102815044;0;0,0,0 → p1
+Publicado em rep04-in-p0: IN;S10;29.525595149722427;0;0,0,0 → p0
+Publicado em rep04-in-p2: IN;S06;20.16635839954838;0;0,0,0 → p2
+Publicado em rep04-in-p2: IN;S06;20.687089491881107;0;0,0,0 → p2
+Publicado em rep04-in-p0: IN;S01;15.976175201581983;0;0,0,0 → p0
+Publicado em rep04-in-p0: IN;S01;21.23401958540888;0;0,0,0 → p0
+Publicado em rep04-in-p0: IN;S01;26.676658792812816;0;0,0,0 → p0
+Publicado em rep04-in-p1: IN;S05;19.664984450188694;0;0,0,0 → p1
+Publicado em rep04-in-p0: IN;S01;18.0950256578188;0;0,0,0 → p0
+Publicado em rep04-in-p1: IN;S08;29.819839769198488;0;0,0,0 → p1
+Publicado em rep04-in-p1: IN;S05;23.231821042621057;0;0,0,0 → p1
+Publicado em rep04-in-p0: IN;S04;20.769185316420504;0;0,0,0 → p0
+Publicado em rep04-in-p0: IN;S04;22.59332772169907;0;0,0,0 → p0
+Publicado em rep04-in-p2: IN;S09;16.321783209084643;0;0,0,0 → p2
+Publicado em rep04-in-p0: IN;S07;23.017542842854645;0;0,0,0 → p0
+Publicado em rep04-in-p0: IN;S10;29.658221978638558;0;0,0,0 → p0
+Publicado em rep04-in-p1: IN;S05;21.299710484256373;0;0,0,0 → p1
+Publicado em rep04-in-p0: IN;S07;22.5894202006834;0;0,0,0 → p0
+Publicado em rep04-in-p2: IN;S06;27.87179595937952;0;0,0,0 → p2
+Publicado em rep04-in-p0: IN;S04;25.18498131664919;0;0,0,0 → p0
+Publicado em rep04-in-p0: IN;S10;15.520156873077301;0;0,0,0 → p0
+Publicado em rep04-in-p2: IN;S09;19.480680251787412;0;0,0,0 → p2
+Publicado em rep04-in-p0: IN;S07;28.123677886935177;0;0,0,0 → p0
+Publicado em rep04-in-p0: IN;S10;26.837001021184847;0;0,0,0 → p0
+Publicado em rep04-in-p0: IN;S01;24.84603097849729;0;0,0,0 → p0
+Publicado em rep04-in-p1: IN;S02;27.132819239877684;0;0,0,0 → p1
+Publicado em rep04-in-p0: IN;S07;28.681229213755472;0;0,0,0 → p0
+Publicado em rep04-in-p1: IN;S02;18.575512396289927;0;0,0,0 → p1
+Publicado em rep04-in-p2: IN;S09;24.804014837735846;0;0,0,0 → p2
+Publicado em rep04-in-p0: IN;S04;22.489120499539275;0;0,0,0 → p0
+Publicado em rep04-in-p2: IN;S03;22.320558652979823;0;0,0,0 → p2
+Publicado em rep04-in-p1: IN;S08;18.493091966690802;0;0,0,0 → p1
+Publicado em rep04-in-p0: IN;S10;20.121554653567035;0;0,0,0 → p0
+Publicado em rep04-in-p2: IN;S03;18.27168994037345;0;0,0,0 → p2
+Publicado em rep04-in-p2: IN;S09;18.68153134667644;0;0,0,0 → p2
+Publicado em rep04-in-p0: IN;S01;24.051638349992544;0;0,0,0 → p0
+Publicado em rep04-in-p1: IN;S02;17.628085876059867;0;0,0,0 → p1
+Publicado em rep04-in-p0: IN;S07;16.408660887879066;0;0,0,0 → p0
+Publicado em rep04-in-p1: IN;S08;20.92818351614226;0;0,0,0 → p1
+Publicado em rep04-in-p2: IN;S06;27.46012000360173;0;0,0,0 → p2
+Publicado em rep04-in-p1: IN;S02;29.384263556894005;0;0,0,0 → p1
+Publicado em rep04-in-p1: IN;S05;24.675986066078707;0;0,0,0 → p1
+Publicado em rep04-in-p0: IN;S10;25.833117740635984;0;0,0,0 → p0
+Publicado em rep04-in-p0: IN;S07;15.136961735496271;0;0,0,0 → p0
+Publicado em rep04-in-p1: IN;S08;26.39091097589898;0;0,0,0 → p1
+Publicado em rep04-in-p0: IN;S04;27.076902793241572;0;0,0,0 → p0
+Publicado em rep04-in-p2: IN;S06;15.158299357082567;0;0,0,0 → p2
+Publicado em rep04-in-p1: IN;S02;15.63505298124349;0;0,0,0 → p1
+Publicado em rep04-in-p1: IN;S05;25.42941003874803;0;0,0,0 → p1
+Publicado em rep04-in-p2: IN;S03;21.036375504441985;0;0,0,0 → p2
+Publicado em rep04-in-p0: IN;S01;21.85942117256483;0;0,0,0 → p0
+Publicado em rep04-in-p2: IN;S03;18.426207500081254;0;0,0,0 → p2
+Publicado em rep04-in-p1: IN;S02;19.619274401800638;0;0,0,0 → p1
+Publicado em rep04-in-p2: IN;S09;22.06676777133128;0;0,0,0 → p2
+Publicado em rep04-in-p2: IN;S06;20.082410852136274;0;0,0,0 → p2
+Publicado em rep04-in-p2: IN;S09;16.912730184313265;0;0,0,0 → p2
+Publicado em rep04-in-p2: IN;S09;18.43093580297304;0;0,0,0 → p2
+Publicado em rep04-in-p1: IN;S08;21.60119031673957;0;0,0,0 → p1
+Publicado em rep04-in-p2: IN;S03;29.159504478507415;0;0,0,0 → p2
+Publicado em rep04-in-p2: IN;S06;20.900865000579437;0;0,0,0 → p2
+Publicado em rep04-in-p1: IN;S08;28.08703979031283;0;0,0,0 → p1
+Publicado em rep04-in-p1: IN;S02;20.582038368811634;0;0,0,0 → p1
+Publicado em rep04-in-p2: IN;S03;28.374934848411105;0;0,0,0 → p2
+1793735815575;RECEBIDO;p0;inc=1793735805548;hb=3;ultimoSeq=101;n=101;de=1;ate=101
+Publicado em rep04-in-p2: IN;S03;25.806789939482087;0;0,0,0 → p2
+Publicado em rep04-in-p0: IN;S01;26.83932240008754;0;0,0,0 → p0
+Publicado em rep04-in-p0: IN;S07;25.226984701373734;0;0,0,0 → p0
+Publicado em rep04-in-p0: IN;S04;17.94871519459824;0;0,0,0 → p0
+Publicado em rep04-in-p0: IN;S10;22.421047817904636;0;0,0,0 → p0
+Publicado em rep04-in-p0: IN;S01;23.976395140758953;0;0,0,0 → p0
+Publicado em rep04-in-p0: IN;S01;16.719001724486258;0;0,0,0 → p0
+Publicado em rep04-in-p0: IN;S01;20.28879799858349;0;0,0,0 → p0
+Publicado em rep04-in-p0: IN;S07;20.310606043005386;0;0,0,0 → p0
+Publicado em rep04-in-p0: IN;S04;21.947227699092096;0;0,0,0 → p0
+Publicado em rep04-in-p1: IN;S05;26.129866393283056;0;0,0,0 → p1
+Publicado em rep04-in-p1: IN;S05;26.66036531375965;0;0,0,0 → p1
+Publicado em rep04-in-p0: IN;S04;15.645914869718746;0;0,0,0 → p0
+Publicado em rep04-in-p0: IN;S07;19.6630783317004;0;0,0,0 → p0
+Publicado em rep04-in-p2: IN;S09;24.39024900825391;0;0,0,0 → p2
+Publicado em rep04-in-p0: IN;S07;29.10497131253375;0;0,0,0 → p0
+Publicado em rep04-in-p0: IN;S04;22.48838060049947;0;0,0,0 → p0
+Publicado em rep04-in-p1: IN;S05;19.24501407957205;0;0,0,0 → p1
+Publicado em rep04-in-p0: IN;S01;29.969103495503706;0;0,0,0 → p0
+Publicado em rep04-in-p1: IN;S05;24.066231715820216;0;0,0,0 → p1
+Publicado em rep04-in-p0: IN;S10;22.524658895680332;0;0,0,0 → p0
+Publicado em rep04-in-p0: IN;S07;24.733521286020995;0;0,0,0 → p0
+Publicado em rep04-in-p2: IN;S03;28.979136945419977;0;0,0,0 → p2
+Publicado em rep04-in-p0: IN;S01;27.1128508349469;0;0,0,0 → p0
+Publicado em rep04-in-p0: IN;S07;27.87930589005932;0;0,0,0 → p0
+Publicado em rep04-in-p1: IN;S05;28.980257486373535;0;0,0,0 → p1
+Publicado em rep04-in-p1: IN;S08;26.745092131508905;0;0,0,0 → p1
+Publicado em rep04-in-p0: IN;S07;21.529729121256416;0;0,0,0 → p0
+Publicado em rep04-in-p0: IN;S07;23.54595156102583;0;0,0,0 → p0
+Publicado em rep04-in-p1: IN;S02;25.1494765295759;0;0,0,0 → p1
+Publicado em rep04-in-p2: IN;S06;16.472144056195194;0;0,0,0 → p2
+Publicado em rep04-in-p1: IN;S05;25.025082700277277;0;0,0,0 → p1
+Publicado em rep04-in-p1: IN;S08;25.04674120135358;0;0,0,0 → p1
+Publicado em rep04-in-p2: IN;S03;28.40857538935653;0;0,0,0 → p2
+Publicado em rep04-in-p2: IN;S09;20.250605983610644;0;0,0,0 → p2
+Publicado em rep04-in-p2: IN;S09;28.29290579735032;0;0,0,0 → p2
+Publicado em rep04-in-p1: IN;S05;18.135896310541042;0;0,0,0 → p1
+Publicado em rep04-in-p0: IN;S04;17.064544911828868;0;0,0,0 → p0
+Publicado em rep04-in-p1: IN;S05;15.401294349774265;0;0,0,0 → p1
+Rajada concluída: 300 registos enviados
+Primeiro envio (ms): 1793735811517
+Último envio (ms): 1793735816192
+Envios p0: 122
+Envios p1: 90
+Envios p2: 88
+> 1793735816441;RECEBIDO;p2;inc=1793735806427;hb=3;ultimoSeq=88;n=88;de=1;ate=88
+1793735820562;RECEBIDO;p0;inc=1793735805548;hb=4;ultimoSeq=131;n=30;de=102;ate=131
+1793735821449;RECEBIDO;p2;inc=1793735806427;hb=4;ultimoSeq=88;n=0;de=0;ate=0
+1793735825568;RECEBIDO;p0;inc=1793735805548;hb=5;ultimoSeq=131;n=0;de=0;ate=0
+1793735826350;SUSPEITA;p1;silencio_ms=15328
+1793735826447;RECEBIDO;p2;inc=1793735806427;hb=5;ultimoSeq=88;n=0;de=0;ate=0
+1793735830568;RECEBIDO;p0;inc=1793735805548;hb=6;ultimoSeq=131;n=0;de=0;ate=0
+1793735831450;RECEBIDO;p2;inc=1793735806427;hb=6;ultimoSeq=88;n=0;de=0;ate=0
+1793735835573;RECEBIDO;p0;inc=1793735805548;hb=7;ultimoSeq=131;n=0;de=0;ate=0
+1793735836448;RECEBIDO;p2;inc=1793735806427;hb=7;ultimoSeq=88;n=0;de=0;ate=0
+1793735840563;RECEBIDO;p0;inc=1793735805548;hb=8;ultimoSeq=131;n=0;de=0;ate=0
+1793735841446;RECEBIDO;p2;inc=1793735806427;hb=8;ultimoSeq=88;n=0;de=0;ate=0
+1793735842497;REINICIO;p1;inc=1793735805998->1793735842397
+1793735842499;RETOMA;p1;inc=1793735842397;hb=1
+1793735842500;RECEBIDO;p1;inc=1793735842397;hb=1;ultimoSeq=11;n=0;de=0;ate=0
+1793735845565;RECEBIDO;p0;inc=1793735805548;hb=9;ultimoSeq=131;n=0;de=0;ate=0
+1793735846444;RECEBIDO;p2;inc=1793735806427;hb=9;ultimoSeq=88;n=0;de=0;ate=0
+1793735847424;RECEBIDO;p1;inc=1793735842397;hb=2;ultimoSeq=11;n=0;de=0;ate=0
+1793735850563;RECEBIDO;p0;inc=1793735805548;hb=10;ultimoSeq=131;n=0;de=0;ate=0
+1793735851448;RECEBIDO;p2;inc=1793735806427;hb=10;ultimoSeq=88;n=0;de=0;ate=0
+1793735852420;RECEBIDO;p1;inc=1793735842397;hb=3;ultimoSeq=11;n=0;de=0;ate=0
