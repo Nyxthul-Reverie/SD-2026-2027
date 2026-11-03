@@ -1,6 +1,15 @@
 package rep04;
 
 public final class Wire {
+    public static final long PERIODO_HB_MS = Long.parseLong(System.getProperty("rep04.periodo", "5000"));
+    public static final int FATOR_TIMEOUT = Integer.parseInt(System.getProperty("rep04.fator", "3"));
+    public static final long VERIFICACAO_MS = 1000;
+
+    static {
+        if (PERIODO_HB_MS <= 0 || FATOR_TIMEOUT <= 0) {
+            throw new IllegalArgumentException("Período e fator têm de ser positivos.");
+        }
+    }
     public static final int LIMITE_RETIDOS = 10;
     public static final int T_TCP_MS = 5000;
     public static final int PORTO_BASE = 7000;
