@@ -37,7 +37,7 @@ write("monitor-replica1.txt",
 write("falhas.txt", f"p0;{base+8000}\n")
 cmd = [e.JAVA, "-Dstdout.encoding=UTF-8", "-Dstderr.encoding=UTF-8", "-cp",
        str(e.ROOT / "rep04-replica/out"), "rep04.HeartbeatCheck", "1", str(folder), str(folder / "falhas.txt")]
-result = subprocess.run(cmd, capture_output=True, creationflags=e.FLAGS, check=True).stdout.decode("utf-8")
+result = subprocess.run(cmd, capture_output=True, creationflags=e.FLAGS, check=True).stdout.decode("utf-8").replace("\r\n", "\n")
 assert "falhas_reais=1;falsas_suspeitas=1" in result, result
 assert "detecao_ms=14000" in result, result
 assert "LATENCIA;p0;amostras=3;media_ms=1433.333;max_ms=2100.000" in result, result
