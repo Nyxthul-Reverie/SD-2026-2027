@@ -17,13 +17,16 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
-public class PartitionReplica {
+public class Replica {
     private static final int N = 3;
 
     public static void main(String[] args) {
         if (args.length < 2 || args.length > 3) {
-            System.out.println("Uso: PartitionReplica <id> <partições> [portoApi]");
+            System.out.println("Uso: Replica <id> <partições> [portoApi]");
             return;
         }
 
@@ -42,7 +45,7 @@ public class PartitionReplica {
             }
             for (String part : args[1].split(",", -1)) {
                 int k = Integer.parseInt(part.trim());
-                if (k < 0 || !partitions.add(k)) {
+                if (k < 0 || k >= N || !partitions.add(k)) {
                     throw new IllegalArgumentException("Partições inválidas: use inteiros não negativos, sem repetições.");
                 }
             }
@@ -61,17 +64,22 @@ public class PartitionReplica {
         }
 
         String api = "http://127.0.0.1:" + portoApi + "/api/v0";
+        MonitorLog log = new MonitorLog("replica" + id);
         List<PartitionState> states = new ArrayList<>();
         try {
             for (int k : partitions) {
                 states.add(new PartitionState(k, new RecordFile("replica-" + id + "-p" + k + ".txt", N),
-                        perda, descartar));
+                        perda, descartar, log));
             }
         } catch (IOException | IllegalArgumentException e) {
             System.out.println("Erro ao iniciar réplica: " + e.getMessage());
             return;
         }
 
+        ScheduledExecutorService timer = Executors.newSingleThreadScheduledExecutor();
+        timer.scheduleAtFixedRate(() -> states.forEach(state -> state.monitor.check()),
+                Wire.VERIFICACAO_MS, Wire.VERIFICACAO_MS, TimeUnit.MILLISECONDS);
+        Runtime.getRuntime().addShutdownHook(new Thread(timer::shutdownNow));
         for (PartitionState state : states) {
             Thread subscription = new Thread(() -> {
                 try {
@@ -116,45 +124,45 @@ public class PartitionReplica {
         private final Long descartar;
         private boolean discarded;
         private final Random random = new Random();
+        private final HeartbeatMonitor monitor;
+        private final MonitorLog log;
 
-        PartitionState(int k, RecordFile file, double perda, Long descartar) throws IOException {
+        PartitionState(int k, RecordFile file, double perda, Long descartar, MonitorLog log) throws IOException {
             this.k = k;
             this.file = file;
             this.last = file.lastSeq();
             this.perda = perda;
             this.descartar = descartar;
+            this.log = log;
+            this.monitor = new HeartbeatMonitor(k, Wire.PERIODO_HB_MS, Wire.FATOR_TIMEOUT, log);
         }
 
         void receive(String message) {
-            SensorRecord current;
-            String host;
-            int port;
+            Batch batch;
             try {
-                String[] parts = Wire.regParts(message);
-                host = parts[0];
-                port = Integer.parseInt(parts[1]);
-                if (host.isBlank() || port < 1 || port > 65535) {
-                    throw new IllegalArgumentException("Endereço/porto inválido.");
-                }
-                current = parseRecord(parts[2]);
-            } catch (IllegalArgumentException e) {
+                batch = Batch.decode(message, N);
+            } catch (IllegalArgumentException | DateTimeParseException e) {
                 System.out.println("REJEITADO: " + message);
                 return;
             }
 
-            leaderHost = host;
-            leaderPort = port;
-            boolean discardOnce = descartar != null && current.getSeq() == descartar && !discarded;
-            if (discardOnce) discarded = true;
-            if (discardOnce || random.nextDouble() < perda) {
-                System.out.println("DESCARTADO (simulação): " + current.getSeq());
-                return;
-            }
-
+            monitor.onHeartbeat(batch.inc, batch.hb);
+            log.received(k, batch);
+            leaderHost = batch.address;
+            leaderPort = batch.port;
             try {
-                apply(current);
-                // Também permite repetir uma recuperação falhada ao receber um duplicado.
-                if (pending.size() > Wire.LIMITE_RETIDOS) recover();
+                for (SensorRecord current : batch.records) {
+                    boolean discardOnce = descartar != null && current.getSeq() == descartar && !discarded;
+                    if (discardOnce) discarded = true;
+                    if (discardOnce || random.nextDouble() < perda) {
+                        System.out.println("DESCARTADO (simulação): " + current.getSeq());
+                        continue;
+                    }
+                    apply(current);
+                    if (pending.size() > Wire.LIMITE_RETIDOS) recover(pending.firstKey() - 1);
+                }
+                // Inclui lotes vazios: descobre a perda do último registo da partição.
+                if (last < batch.lastSeq) recover(batch.lastSeq);
             } catch (IOException e) {
                 System.out.println("Erro de escrita: " + e.getMessage());
             }
@@ -186,9 +194,9 @@ public class PartitionReplica {
             }
         }
 
-        private void recover() {
+        private void recover(long to) {
             long from = last + 1;
-            long to = pending.firstKey() - 1;
+            if (from > to) return;
             if (leaderHost == null || leaderHost.isBlank() || leaderPort < 1 || leaderPort > 65535) {
                 System.out.println("RECUPERAÇÃO FALHOU: endereço/porto do líder indisponível.");
                 return;
@@ -208,6 +216,8 @@ public class PartitionReplica {
                         if (line == null) throw new IOException("Resposta interrompida antes de FIM.");
                         if (line.equals("FIM")) {
                             cascade();
+                            if (last < to) throw new IOException("Resposta incompleta até " + to);
+                            log.accept("RECUPERACAO;p" + k + ";de=" + from + ";ate=" + to);
                             return;
                         }
                         if (line.equals("ERRO") || line.startsWith("ERRO ")) throw new IOException(line);
