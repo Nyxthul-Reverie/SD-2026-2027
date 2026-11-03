@@ -1,4 +1,0 @@
-Líder p0 pronto; recuperação TCP no porto 7000
-HEARTBEAT: hb=1 n=0 ultimoSeq=0
-HEARTBEAT: hb=2 n=0 ultimoSeq=0
-Erro ao registar: V[0]=3 diferente de seq=1

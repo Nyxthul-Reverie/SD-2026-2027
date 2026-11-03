@@ -1,6 +1,0 @@
-Réplica 1 à escuta em rep04-p1
-Réplica 1 à escuta em rep04-p0
-1793736233044;RECEBIDO;p0;inc=1793736232956;hb=1;ultimoSeq=0;n=0;de=0;ate=0
-1793736233370;RECEBIDO;p1;inc=1793736233296;hb=1;ultimoSeq=0;n=0;de=0;ate=0
-1793736237978;RECEBIDO;p0;inc=1793736232956;hb=2;ultimoSeq=0;n=0;de=0;ate=0
-1793736238311;RECEBIDO;p1;inc=1793736233296;hb=2;ultimoSeq=0;n=0;de=0;ate=0

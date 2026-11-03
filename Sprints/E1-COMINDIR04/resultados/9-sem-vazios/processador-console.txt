@@ -1,9 +1,0 @@
-Processador à escuta em rep04-p0
-Processador à escuta em rep04-p2
-Processador à escuta em rep04-p1
-1793736210252;RECEBIDO;p0;inc=1793736205199;hb=1;ultimoSeq=1;n=1;de=1;ate=1
-1793736210640;RECEBIDO;p1;inc=1793736205615;hb=1;ultimoSeq=1;n=1;de=1;ate=1
-1793736211096;RECEBIDO;p2;inc=1793736206067;hb=1;ultimoSeq=1;n=1;de=1;ate=1
-1793736225541;SUSPEITA;p0;silencio_ms=15300
-1793736226541;SUSPEITA;p1;silencio_ms=15901
-1793736226541;SUSPEITA;p2;silencio_ms=15444
