@@ -1,0 +1,8 @@
+Réplica 2 à escuta em rep04-p2
+Réplica 2 à escuta em rep04-p1
+1793736210659;RECEBIDO;p1;inc=1793736205615;hb=1;ultimoSeq=1;n=1;de=1;ate=1
+Aplicado: 1;S02;22.0;2026-11-03T20:03:29.213;1;0,1,0
+1793736211096;RECEBIDO;p2;inc=1793736206067;hb=1;ultimoSeq=1;n=1;de=1;ate=1
+Aplicado: 1;S03;23.0;2026-11-03T20:03:29.211;1;0,0,1
+1793736226452;SUSPEITA;p1;silencio_ms=15801
+1793736226452;SUSPEITA;p2;silencio_ms=15355

@@ -1,0 +1,25 @@
+LOTES;p0;inc=1793736205199;total=1;vazios_pct=0.000;n_media=1.000;n_max=1.000;intervalo_media_ms=NA;intervalo_max_ms=NA
+LOTES;p1;inc=1793736205615;total=1;vazios_pct=0.000;n_media=1.000;n_max=1.000;intervalo_media_ms=NA;intervalo_max_ms=NA
+LOTES;p2;inc=1793736206067;total=1;vazios_pct=0.000;n_media=1.000;n_max=1.000;intervalo_media_ms=NA;intervalo_max_ms=NA
+SUSPEITA;processador;p0;inc=1793736205199;instante=1793736225541;classe=FALHA_REAL;silencio_publicacao_ms=15320;detecao_ms=NA
+SUSPEITA;processador;p1;inc=1793736205615;instante=1793736226541;classe=FALHA_REAL;silencio_publicacao_ms=15914;detecao_ms=NA
+SUSPEITA;processador;p2;inc=1793736206067;instante=1793736226541;classe=FALHA_REAL;silencio_publicacao_ms=15455;detecao_ms=NA
+SUSPEITA;produtor;p0;inc=1793736205199;instante=1793736226114;classe=FALHA_REAL;silencio_publicacao_ms=15893;detecao_ms=NA
+SUSPEITA;produtor;p1;inc=1793736205615;instante=1793736226115;classe=FALHA_REAL;silencio_publicacao_ms=15488;detecao_ms=NA
+SUSPEITA;produtor;p2;inc=1793736206067;instante=1793736226115;classe=FALHA_REAL;silencio_publicacao_ms=15029;detecao_ms=NA
+SUSPEITA;replica1;p0;inc=1793736205199;instante=1793736225451;classe=FALHA_REAL;silencio_publicacao_ms=15230;detecao_ms=NA
+SUSPEITA;replica1;p1;inc=1793736205615;instante=1793736226450;classe=FALHA_REAL;silencio_publicacao_ms=15823;detecao_ms=NA
+SUSPEITA;replica2;p1;inc=1793736205615;instante=1793736226452;classe=FALHA_REAL;silencio_publicacao_ms=15825;detecao_ms=NA
+SUSPEITA;replica2;p2;inc=1793736206067;instante=1793736226452;classe=FALHA_REAL;silencio_publicacao_ms=15366;detecao_ms=NA
+SUSPEITA;replica3;p0;inc=1793736205199;instante=1793736225451;classe=FALHA_REAL;silencio_publicacao_ms=15230;detecao_ms=NA
+SUSPEITA;replica3;p2;inc=1793736206067;instante=1793736226450;classe=FALHA_REAL;silencio_publicacao_ms=15364;detecao_ms=NA
+LATENCIA;p0;amostras=4;media_ms=1038.500;max_ms=1041.000
+LATENCIA;p1;amostras=4;media_ms=1431.750;max_ms=1446.000
+LATENCIA;p2;amostras=4;media_ms=1885.000;max_ms=1885.000
+RESUMO;lotes=3;vazios=0;registos_transportados=3;falhas_reais=12;falsas_suspeitas=0;indeterminadas=0;HB_PERDIDO=0;RECUPERACAO=0;cabecalhos_incoerentes=0
+DETECAO;amostras=0;min_ms=NA;media_ms=NA;max_ms=NA
+BYTES;LOTE_total_por_registo=82.000;LOTE_com_dados_por_registo=82.000;REG_equivalente=61.000
+NOTAS: bytes UTF-8 da mensagem, sem HTTP/IPFS; REG equivalente usa 127.0.0.1 e 7000+k.
+Latências: primeira receção de cada registo por participante, agregadas por partição; TCP excluído.
+Falha real é a classificação operacional da ficha no intervalo observado, não uma prova de morte.
+NA significa ausência de amostras. Executar na máquina/fuso que produziu os logs.

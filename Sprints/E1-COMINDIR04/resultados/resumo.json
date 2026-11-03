@@ -1295,5 +1295,494 @@
       0,
       2
     ]
+  },
+  "9-fator1": {
+    "configuracao": {
+      "name": "9-fator1",
+      "periodo_ms": 5000,
+      "fator": 1,
+      "intervalo_rajada_ms": 10,
+      "inicio": 1793736328560,
+      "mutacao": null,
+      "estado": "PASS",
+      "api": "http://127.0.0.1:5003/api/v0",
+      "rede": "Kubo isolado: sem bootstrap/MDNS, swarm em loopback",
+      "pronto": 1793736336925,
+      "replicas_iguais_ao_lider": {
+        "replica1-p0": true,
+        "replica1-p1": true,
+        "replica2-p1": true,
+        "replica2-p2": true,
+        "replica3-p0": true,
+        "replica3-p2": true
+      },
+      "fim": 1793736358443
+    },
+    "lotes_por_particao": [
+      6,
+      6,
+      6
+    ],
+    "registos_transportados": 336,
+    "registos_por_lote_media": 18.666666666666668,
+    "registos_por_lote_max": 104,
+    "vazios_pct": 66.66666666666667,
+    "intervalo_media_ms": 4996.933333333333,
+    "intervalo_max_ms": 5008,
+    "bytes_lote_total": 21213,
+    "bytes_lote_com_dados": 20735,
+    "lotes_minuto_janela_parada": [],
+    "aceites_por_particao": [
+      {
+        "normais": 131,
+        "alarmes": 8
+      },
+      {
+        "normais": 75,
+        "alarmes": 18
+      },
+      {
+        "normais": 94,
+        "alarmes": 10
+      }
+    ],
+    "checker": {
+      "lotes": "18",
+      "vazios": "12",
+      "registos_transportados": "336",
+      "falhas_reais": "0",
+      "falsas_suspeitas": "0",
+      "indeterminadas": "0",
+      "HB_PERDIDO": "0",
+      "RECUPERACAO": "0",
+      "cabecalhos_incoerentes": "0"
+    },
+    "bytes_por_registo": {
+      "LOTE_total_por_registo": "63.134",
+      "LOTE_com_dados_por_registo": "61.711",
+      "REG_equivalente": "78.964"
+    },
+    "latencia_media_ms": 2311.5573898809525,
+    "latencia_max_ms": 5001.0,
+    "detecoes_ms": [],
+    "suspeitas": [],
+    "enviadas_por_particao": [
+      131,
+      75,
+      94
+    ]
+  },
+  "9-fora-lock": {
+    "configuracao": {
+      "name": "9-fora-lock",
+      "periodo_ms": 5000,
+      "fator": 3,
+      "intervalo_rajada_ms": 10,
+      "inicio": 1793736242632,
+      "mutacao": "fora-lock",
+      "estado": "PASS",
+      "api": "http://127.0.0.1:5003/api/v0",
+      "rede": "Kubo isolado: sem bootstrap/MDNS, swarm em loopback",
+      "pronto": 1793736251521,
+      "replicas_iguais_ao_lider": {
+        "replica1-p0": true,
+        "replica1-p1": true,
+        "replica2-p1": true,
+        "replica2-p2": true,
+        "replica3-p0": true,
+        "replica3-p2": true
+      },
+      "fim": 1793736269613
+    },
+    "lotes_por_particao": [
+      5,
+      5,
+      5
+    ],
+    "registos_transportados": 339,
+    "registos_por_lote_media": 22.6,
+    "registos_por_lote_max": 108,
+    "vazios_pct": 60.0,
+    "intervalo_media_ms": 4999.833333333333,
+    "intervalo_max_ms": 5015,
+    "bytes_lote_total": 21215,
+    "bytes_lote_com_dados": 20858,
+    "lotes_minuto_janela_parada": [],
+    "aceites_por_particao": [
+      {
+        "normais": 118,
+        "alarmes": 10
+      },
+      {
+        "normais": 89,
+        "alarmes": 19
+      },
+      {
+        "normais": 93,
+        "alarmes": 10
+      }
+    ],
+    "checker": {
+      "lotes": "15",
+      "vazios": "9",
+      "registos_transportados": "339",
+      "falhas_reais": "0",
+      "falsas_suspeitas": "0",
+      "indeterminadas": "0",
+      "HB_PERDIDO": "0",
+      "RECUPERACAO": "4",
+      "cabecalhos_incoerentes": "6"
+    },
+    "bytes_por_registo": {
+      "LOTE_total_por_registo": "62.581",
+      "LOTE_com_dados_por_registo": "61.528",
+      "REG_equivalente": "78.876"
+    },
+    "latencia_media_ms": 2325.0700895632867,
+    "latencia_max_ms": 5107.0,
+    "detecoes_ms": [],
+    "suspeitas": [],
+    "enviadas_por_particao": [
+      118,
+      89,
+      93
+    ]
+  },
+  "9-relogios": {
+    "configuracao": {
+      "name": "9-relogios",
+      "periodo_ms": 5000,
+      "fator": 3,
+      "intervalo_rajada_ms": 10,
+      "inicio": 1793736230077,
+      "mutacao": "relogios",
+      "estado": "PASS",
+      "api": "http://127.0.0.1:5003/api/v0",
+      "rede": "Kubo isolado: sem bootstrap/MDNS, swarm em loopback",
+      "pronto": 1793736238737,
+      "replicas_iguais_ao_lider": {
+        "replica1-p0": true,
+        "replica1-p1": true,
+        "replica2-p1": true,
+        "replica2-p2": true,
+        "replica3-p0": true,
+        "replica3-p2": true
+      },
+      "fim": 1793736242630
+    },
+    "lotes_por_particao": [
+      2,
+      2,
+      2
+    ],
+    "registos_transportados": 0,
+    "registos_por_lote_media": 0,
+    "registos_por_lote_max": 0,
+    "vazios_pct": 100.0,
+    "intervalo_media_ms": 4994.333333333333,
+    "intervalo_max_ms": 4997,
+    "bytes_lote_total": 234,
+    "bytes_lote_com_dados": 0,
+    "lotes_minuto_janela_parada": [],
+    "aceites_por_particao": [
+      {
+        "normais": 0,
+        "alarmes": 0
+      },
+      {
+        "normais": 0,
+        "alarmes": 0
+      },
+      {
+        "normais": 0,
+        "alarmes": 0
+      }
+    ],
+    "checker": {
+      "lotes": "6",
+      "vazios": "6",
+      "registos_transportados": "0",
+      "falhas_reais": "0",
+      "falsas_suspeitas": "0",
+      "indeterminadas": "0",
+      "HB_PERDIDO": "0",
+      "RECUPERACAO": "0",
+      "cabecalhos_incoerentes": "0"
+    },
+    "bytes_por_registo": {
+      "LOTE_total_por_registo": "NA",
+      "LOTE_com_dados_por_registo": "NA",
+      "REG_equivalente": "NA"
+    },
+    "latencia_media_ms": null,
+    "latencia_max_ms": null,
+    "detecoes_ms": [],
+    "suspeitas": [],
+    "enviadas_por_particao": [
+      1,
+      0,
+      0
+    ]
+  },
+  "9-sem-vazios": {
+    "configuracao": {
+      "name": "9-sem-vazios",
+      "periodo_ms": 5000,
+      "fator": 3,
+      "intervalo_rajada_ms": 10,
+      "inicio": 1793736201913,
+      "mutacao": "sem-vazios",
+      "estado": "PASS",
+      "api": "http://127.0.0.1:5003/api/v0",
+      "rede": "Kubo isolado: sem bootstrap/MDNS, swarm em loopback",
+      "pronto": 1793736209153,
+      "replicas_iguais_ao_lider": {
+        "replica1-p0": true,
+        "replica1-p1": true,
+        "replica2-p1": true,
+        "replica2-p2": true,
+        "replica3-p0": true,
+        "replica3-p2": true
+      },
+      "fim": 1793736230075
+    },
+    "lotes_por_particao": [
+      1,
+      1,
+      1
+    ],
+    "registos_transportados": 3,
+    "registos_por_lote_media": 1,
+    "registos_por_lote_max": 1,
+    "vazios_pct": 0.0,
+    "intervalo_media_ms": null,
+    "intervalo_max_ms": null,
+    "bytes_lote_total": 246,
+    "bytes_lote_com_dados": 246,
+    "lotes_minuto_janela_parada": [],
+    "aceites_por_particao": [
+      {
+        "normais": 1,
+        "alarmes": 0
+      },
+      {
+        "normais": 1,
+        "alarmes": 0
+      },
+      {
+        "normais": 1,
+        "alarmes": 0
+      }
+    ],
+    "checker": {
+      "lotes": "3",
+      "vazios": "0",
+      "registos_transportados": "3",
+      "falhas_reais": "12",
+      "falsas_suspeitas": "0",
+      "indeterminadas": "0",
+      "HB_PERDIDO": "0",
+      "RECUPERACAO": "0",
+      "cabecalhos_incoerentes": "0"
+    },
+    "bytes_por_registo": {
+      "LOTE_total_por_registo": "82.000",
+      "LOTE_com_dados_por_registo": "82.000",
+      "REG_equivalente": "61.000"
+    },
+    "latencia_media_ms": 1451.75,
+    "latencia_max_ms": 1885.0,
+    "detecoes_ms": [],
+    "suspeitas": [
+      {
+        "inc": "1793736205199",
+        "instante": "1793736225541",
+        "classe": "FALHA_REAL",
+        "silencio_publicacao_ms": "15320",
+        "detecao_ms": "NA",
+        "participante": "processador",
+        "particao": "p0"
+      },
+      {
+        "inc": "1793736205615",
+        "instante": "1793736226541",
+        "classe": "FALHA_REAL",
+        "silencio_publicacao_ms": "15914",
+        "detecao_ms": "NA",
+        "participante": "processador",
+        "particao": "p1"
+      },
+      {
+        "inc": "1793736206067",
+        "instante": "1793736226541",
+        "classe": "FALHA_REAL",
+        "silencio_publicacao_ms": "15455",
+        "detecao_ms": "NA",
+        "participante": "processador",
+        "particao": "p2"
+      },
+      {
+        "inc": "1793736205199",
+        "instante": "1793736226114",
+        "classe": "FALHA_REAL",
+        "silencio_publicacao_ms": "15893",
+        "detecao_ms": "NA",
+        "participante": "produtor",
+        "particao": "p0"
+      },
+      {
+        "inc": "1793736205615",
+        "instante": "1793736226115",
+        "classe": "FALHA_REAL",
+        "silencio_publicacao_ms": "15488",
+        "detecao_ms": "NA",
+        "participante": "produtor",
+        "particao": "p1"
+      },
+      {
+        "inc": "1793736206067",
+        "instante": "1793736226115",
+        "classe": "FALHA_REAL",
+        "silencio_publicacao_ms": "15029",
+        "detecao_ms": "NA",
+        "participante": "produtor",
+        "particao": "p2"
+      },
+      {
+        "inc": "1793736205199",
+        "instante": "1793736225451",
+        "classe": "FALHA_REAL",
+        "silencio_publicacao_ms": "15230",
+        "detecao_ms": "NA",
+        "participante": "replica1",
+        "particao": "p0"
+      },
+      {
+        "inc": "1793736205615",
+        "instante": "1793736226450",
+        "classe": "FALHA_REAL",
+        "silencio_publicacao_ms": "15823",
+        "detecao_ms": "NA",
+        "participante": "replica1",
+        "particao": "p1"
+      },
+      {
+        "inc": "1793736205615",
+        "instante": "1793736226452",
+        "classe": "FALHA_REAL",
+        "silencio_publicacao_ms": "15825",
+        "detecao_ms": "NA",
+        "participante": "replica2",
+        "particao": "p1"
+      },
+      {
+        "inc": "1793736206067",
+        "instante": "1793736226452",
+        "classe": "FALHA_REAL",
+        "silencio_publicacao_ms": "15366",
+        "detecao_ms": "NA",
+        "participante": "replica2",
+        "particao": "p2"
+      },
+      {
+        "inc": "1793736205199",
+        "instante": "1793736225451",
+        "classe": "FALHA_REAL",
+        "silencio_publicacao_ms": "15230",
+        "detecao_ms": "NA",
+        "participante": "replica3",
+        "particao": "p0"
+      },
+      {
+        "inc": "1793736206067",
+        "instante": "1793736226450",
+        "classe": "FALHA_REAL",
+        "silencio_publicacao_ms": "15364",
+        "detecao_ms": "NA",
+        "participante": "replica3",
+        "particao": "p2"
+      }
+    ],
+    "enviadas_por_particao": [
+      1,
+      1,
+      1
+    ]
+  },
+  "9-ultimo-zero": {
+    "configuracao": {
+      "name": "9-ultimo-zero",
+      "periodo_ms": 5000,
+      "fator": 3,
+      "intervalo_rajada_ms": 10,
+      "inicio": 1793736269627,
+      "mutacao": "ultimo-zero",
+      "estado": "PASS",
+      "api": "http://127.0.0.1:5003/api/v0",
+      "rede": "Kubo isolado: sem bootstrap/MDNS, swarm em loopback",
+      "pronto": 1793736280171,
+      "replicas_iguais_ao_lider": {
+        "replica1-p0": false,
+        "replica1-p1": false,
+        "replica2-p1": false,
+        "replica2-p2": false,
+        "replica3-p0": false,
+        "replica3-p2": false
+      },
+      "fim": 1793736328557
+    },
+    "lotes_por_particao": [
+      10,
+      10,
+      10
+    ],
+    "registos_transportados": 0,
+    "registos_por_lote_media": 0,
+    "registos_por_lote_max": 0,
+    "vazios_pct": 100.0,
+    "intervalo_media_ms": 5553.518518518518,
+    "intervalo_max_ms": 10010,
+    "bytes_lote_total": 1173,
+    "bytes_lote_com_dados": 0,
+    "lotes_minuto_janela_parada": [],
+    "aceites_por_particao": [
+      {
+        "normais": 1,
+        "alarmes": 0
+      },
+      {
+        "normais": 1,
+        "alarmes": 0
+      },
+      {
+        "normais": 1,
+        "alarmes": 0
+      }
+    ],
+    "checker": {
+      "lotes": "30",
+      "vazios": "30",
+      "registos_transportados": "0",
+      "falhas_reais": "0",
+      "falsas_suspeitas": "0",
+      "indeterminadas": "0",
+      "HB_PERDIDO": "12",
+      "RECUPERACAO": "0",
+      "cabecalhos_incoerentes": "0"
+    },
+    "bytes_por_registo": {
+      "LOTE_total_por_registo": "NA",
+      "LOTE_com_dados_por_registo": "NA",
+      "REG_equivalente": "NA"
+    },
+    "latencia_media_ms": null,
+    "latencia_max_ms": null,
+    "detecoes_ms": [],
+    "suspeitas": [],
+    "enviadas_por_particao": [
+      1,
+      1,
+      1
+    ]
   }
 }

@@ -1,0 +1,10 @@
+Registos lidos: 3
+Violações V[k] == seq: 0
+Pares a → b: 0
+Pares b → a: 0
+Pares causalmente relacionados: 0
+Pares concorrentes: 3
+Violações da condição de Lamport: 0
+Vetores iguais em eventos distintos: 0
+Pares concorrentes com L distinto: 0 (0,00%)
+Vista Lamport: C:\Users\alves\Downloads\SDT\SD-2026-2027\Sprints\E1-COMINDIR04\resultados\9-ultimo-zero\vista-lamport.txt

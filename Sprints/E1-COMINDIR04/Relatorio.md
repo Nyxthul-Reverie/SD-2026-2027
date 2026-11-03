@@ -51,6 +51,20 @@ No ensaio 8(d), o intervalo máximo entre publicações de p2 foi 25005 ms. Apó
 
 Todos estes valores cabem no intervalo ideal ]10,16] s. As diferenças entre participantes resultam das suas receções e verificações locais.
 
+## 9. Falhas deliberadas
+
+Cada alteração foi compilada numa cópia em ensaios/mutacao-*, sem substituir o código correto. A cópia exata do líder alterado está junto aos logs de cada ensaio. O fator 1 foi aplicado apenas aos participantes por propriedade de arranque.
+
+| Falha introduzida | Lado onde surgiu | Deteção observada | Conclusão |
+|---|---|---|---|
+| [Publicar só lotes não vazios](resultados/9-sem-vazios/HeartbeatCheck.txt) | Participantes, após os líderes ficarem sem leituras | HeartbeatCheck registou 12 suspeitas, quatro por partição; CausalCheck não encontrou violações | Líderes vivos podem ficar suspeitos sem heartbeats vazios. Pela regra operacional da ficha, o checker classificou estas suspeitas como reais porque não houve retoma na janela; os processos estavam vivos. O log sozinho não prova morte. |
+| [Incrementar L e V[k] por heartbeat](resultados/9-relogios/lider0-console.txt) | Líder ao aceitar o IN seguinte | A verificação do líder rejeitou o registo: V[0]=3 diferente de seq=1. Os verificadores não encontraram violações em ficheiros, porque o registo inválido não foi escrito | Alterar relógios sem criar registo quebra a correspondência V[k]=seq. Uma verificação na escrita pode impedir que CausalCheck venha a observar a violação. |
+| [Ler ultimoSeq fora do lock](resultados/9-fora-lock/HeartbeatCheck.txt) | Cabeçalhos publicados e participantes | HeartbeatCheck registou seis avisos de cabeçalho incoerente e quatro recuperações. CausalCheck manteve zero violações | É possível anunciar dados que ficaram na lista seguinte. Foi introduzida uma pausa de 150 ms na janela fora do lock, só na cópia de teste, para tornar a corrida observável. |
+| [ultimoSeq=0 e descartar um em dez lotes](resultados/9-ultimo-zero/HeartbeatCheck.txt) | Réplicas sem a última leitura de cada partição | HeartbeatCheck contou 12 HB_PERDIDO e zero recuperações. CausalCheck não encontrou violações nos três registos dos líderes. As seis comparações réplica/líder falharam, como esperado | O salto de hb denuncia sinal perdido, mas não fornece o limite de seq. Sem ultimoSeq correto e sem um registo posterior, a perda final permanece. |
+| [Fator 1 nos participantes](resultados/9-fator1/HeartbeatCheck.txt) | Detetores com timeout de 5 s | Nesta execução não houve suspeitas e os ficheiros coincidiram | Aumentar o risco não obriga a que a falha ocorra em toda execução. Não se alterou o resultado para mostrar uma falsa suspeita; a suspensão de 8(d) demonstra esse fenómeno. |
+
+O código de produção mantém o fator 3, o envio de lotes vazios, ultimoSeq dentro da secção sincronizada e relógios inalterados nos heartbeats.
+
 ## 10. Medições
 
 A primeira tabela usa a rajada 8(b) com Δ=5000 ms para carga/bytes/latência, o minuto parado de 8(b) para a comparação sem carga e as 12 observações das três repetições de 8(c) para deteção. Não se misturam as janelas de carga e de falha numa média sem significado.

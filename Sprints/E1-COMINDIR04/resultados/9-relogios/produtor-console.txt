@@ -1,0 +1,7 @@
+Pausa entre envios da rajada: 10 ms; <s> continua a ser o número de sensores.
+Produtor pronto. Formato: <sensor> <temperatura> | rajada <n> <s> | rajada-quente <n> <s> | sair
+> 1793736237985;RECEBIDO;p0;inc=1793736232956;hb=2;ultimoSeq=0;n=0;de=0;ate=0
+1793736238311;RECEBIDO;p1;inc=1793736233296;hb=2;ultimoSeq=0;n=0;de=0;ate=0
+1793736238681;RECEBIDO;p2;inc=1793736233663;hb=2;ultimoSeq=0;n=0;de=0;ate=0
+Publicado em rep04-in-p0: IN;S01;21.0;0;0,0,0 → p0
+> 
