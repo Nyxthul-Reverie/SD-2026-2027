@@ -1,0 +1,23 @@
+{
+  "name": "8b-parado-5000",
+  "periodo_ms": 5000,
+  "fator": 3,
+  "intervalo_rajada_ms": 10,
+  "inicio": 1793735631349,
+  "mutacao": null,
+  "estado": "PASS",
+  "api": "http://127.0.0.1:5003/api/v0",
+  "rede": "Kubo isolado: sem bootstrap/MDNS, swarm em loopback",
+  "pronto": 1793735639601,
+  "janela_sem_leituras_inicio": 1793735639602,
+  "janela_sem_leituras_fim": 1793735699603,
+  "replicas_iguais_ao_lider": {
+    "replica1-p0": true,
+    "replica1-p1": true,
+    "replica2-p1": true,
+    "replica2-p2": true,
+    "replica3-p0": true,
+    "replica3-p2": true
+  },
+  "fim": 1793735700582
+}

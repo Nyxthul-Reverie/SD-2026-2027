@@ -1,0 +1,13 @@
+LOTES;p0;inc=1793735606984;total=5;vazios_pct=60.000;n_media=24.200;n_max=95.000;intervalo_media_ms=4999.750;intervalo_max_ms=5008.000
+LOTES;p1;inc=1793735607410;total=5;vazios_pct=60.000;n_media=21.600;n_max=100.000;intervalo_media_ms=4998.500;intervalo_max_ms=5010.000
+LOTES;p2;inc=1793735607863;total=5;vazios_pct=60.000;n_media=19.200;n_max=95.000;intervalo_media_ms=4996.000;intervalo_max_ms=5006.000
+LATENCIA;p0;amostras=484;media_ms=2531.455;max_ms=4997.000
+LATENCIA;p1;amostras=432;media_ms=2316.176;max_ms=5000.000
+LATENCIA;p2;amostras=384;media_ms=2295.005;max_ms=4885.000
+RESUMO;lotes=15;vazios=9;registos_transportados=325;falhas_reais=0;falsas_suspeitas=0;indeterminadas=0;HB_PERDIDO=0;RECUPERACAO=0;cabecalhos_incoerentes=0
+DETECAO;amostras=0;min_ms=NA;media_ms=NA;max_ms=NA
+BYTES;LOTE_total_por_registo=62.255;LOTE_com_dados_por_registo=61.160;REG_equivalente=78.397
+NOTAS: bytes UTF-8 da mensagem, sem HTTP/IPFS; REG equivalente usa 127.0.0.1 e 7000+k.
+Latências: primeira receção de cada registo por participante, agregadas por partição; TCP excluído.
+Falha real é a classificação operacional da ficha no intervalo observado, não uma prova de morte.
+NA significa ausência de amostras. Executar na máquina/fuso que produziu os logs.
