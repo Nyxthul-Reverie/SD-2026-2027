@@ -3,6 +3,10 @@ package rep04;
 import java.util.Set;
 import java.io.IOException;
 import java.util.HashSet;
+import java.time.format.DateTimeParseException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class AlarmProcessor {
     private static final String DEFAULT_API = "http://127.0.0.1:5001/api/v0";
@@ -15,6 +19,8 @@ public class AlarmProcessor {
 
     private final IpfsPubSub pubSub;
     private final Partitioner partitioner;
+    private final MonitorLog log = new MonitorLog("processador");
+    private final HeartbeatMonitor[] detectors;
 
     public AlarmProcessor(int n, String api) {
         if (n <= 0) {
@@ -29,19 +35,26 @@ public class AlarmProcessor {
         }
         this.pubSub = new IpfsPubSub(api);
         this.partitioner = new Partitioner(n);
+        this.detectors = new HeartbeatMonitor[n];
+        for (int k = 0; k < n; k++) {
+            detectors[k] = new HeartbeatMonitor(k, Wire.PERIODO_HB_MS, Wire.FATOR_TIMEOUT, log);
+        }
     }
 
     private void receive(int k, String message) {
-        SensorRecord record;
-
+        Batch batch;
         try {
-            String[] parts = Wire.regParts(message);
-            record = SensorRecord.fromLine(parts[2], n);
-        } catch (IllegalArgumentException e) {
+            batch = Batch.decode(message, n);
+        } catch (IllegalArgumentException | DateTimeParseException e) {
             System.out.println("REJEITADO: " + message);
             return;
         }
+        detectors[k].onHeartbeat(batch.inc, batch.hb);
+        log.received(k, batch);
+        for (SensorRecord record : batch.records) process(k, record);
+    }
 
+    private void process(int k, SensorRecord record) {
         if (record.getSensorId().startsWith("ALARM-")) {
             return;
         }
@@ -75,6 +88,9 @@ public class AlarmProcessor {
         String alarmMessage = Wire.in(alarmSensor, record.getTemperature(), alarmLamport, alarmVector);
 
         try {
+            if (detectors[j].state() == HeartbeatMonitor.State.SUSPEITO) {
+                System.out.println("AVISO: líder p" + j + " suspeito; alarme " + alarmSensor + " pode perder-se");
+            }
             pubSub.publish(Wire.topicIn(j), alarmMessage);
 
             System.out.println("ALARME: " + record.getSensorId() + " p" + k + "#" + record.getSeq() + " → p" + j);
@@ -87,6 +103,11 @@ public class AlarmProcessor {
     }
 
     private void start() {
+        ScheduledExecutorService timer = Executors.newSingleThreadScheduledExecutor();
+        timer.scheduleAtFixedRate(() -> {
+            for (HeartbeatMonitor detector : detectors) detector.check();
+        }, Wire.VERIFICACAO_MS, Wire.VERIFICACAO_MS, TimeUnit.MILLISECONDS);
+        Runtime.getRuntime().addShutdownHook(new Thread(timer::shutdownNow));
         for (int k = 0; k < n; k++) {
             final int partition = k;
 
