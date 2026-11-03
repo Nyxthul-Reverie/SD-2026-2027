@@ -75,6 +75,9 @@ public class PartitionLeader {
         RecordFile file = new RecordFile("lider-p" + k + ".txt", n);
 
         try {
+            // Uma partição sem leituras também tem um ficheiro para os verificadores.
+            Files.writeString(Path.of("lider-p" + k + ".txt"), "", StandardCharsets.UTF_8,
+                    StandardOpenOption.CREATE, StandardOpenOption.APPEND);
             PartitionLeader leader = new PartitionLeader(file, n);
             // Abrir o porto antes de arrancar a entrada evita aceitar leituras se o bind falhar.
             try (ServerSocket server = new ServerSocket(porto)) {

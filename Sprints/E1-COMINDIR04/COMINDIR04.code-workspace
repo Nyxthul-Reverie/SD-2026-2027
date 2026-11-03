@@ -1,0 +1,26 @@
+{
+  "folders": [
+    {
+      "path": "rep04-produtor"
+    },
+    {
+      "path": "rep04-lider"
+    },
+    {
+      "path": "rep04-replica"
+    },
+    {
+      "path": "rep04-processador"
+    }
+  ],
+  "settings": {
+    "java.configuration.runtimes": [
+      {
+        "name": "JavaSE-23",
+        "path": "C:/Users/alves/.jdks/openjdk-23",
+        "default": true
+      }
+    ],
+    "java.jdt.ls.java.home": "C:/Users/alves/.jdks/openjdk-23"
+  }
+}
