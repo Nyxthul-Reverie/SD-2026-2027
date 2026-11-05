@@ -88,7 +88,14 @@ public final class RaftCheck {
             }
             if(e.type.equals("VOTO"))votes.computeIfAbsent("p"+e.k+";termo="+e.number("termo"),x->new ArrayList<>()).add("n"+e.node+":"+e.line.substring(e.line.indexOf(";candidato=")+1));
         }
-        int unsafe=0,split=0;Set<String> terms=new TreeSet<>();terms.addAll(candidates.keySet());terms.addAll(leaders.keySet());terms.addAll(votes.keySet());
+        int unsafe=0,split=0,invalidMajorities=0;
+        for(Event e:events)if(e.type.equals("LIDER")) {
+            Set<Integer> voters=new HashSet<>();
+            String value=e.field("votos").replace("[","").replace("]","");
+            for(String v:value.split(","))if(!v.trim().isEmpty())voters.add(Integer.parseInt(v.trim()));
+            if(voters.size()<=Wire.GRUPO/2||!voters.contains(e.node))invalidMajorities++;
+        }
+        Set<String> terms=new TreeSet<>();terms.addAll(candidates.keySet());terms.addAll(leaders.keySet());terms.addAll(votes.keySet());
         for(String key:terms){
             Set<Integer> ls=leaders.getOrDefault(key,Set.of());if(ls.size()>1)unsafe++;if(ls.isEmpty())split++;
             Long start=candidateTime.get(key),end=electedTime.get(key);
@@ -134,7 +141,8 @@ public final class RaftCheck {
         }
         System.out.println("RESUMO;termos="+terms.size()+";votos_divididos="+split+";termos_multiplos_lideres="+unsafe+";regressoes_termo="+regressions+";estados_invalidos="+badStates+";ficheiros_ausentes="+missing+";seq_divergentes="+differences+";comprimentos_diferentes="+lengthDifferences+";enviadas="+sent.size()+";perdidas="+lost+";truncados="+truncated+";reaparecidos_outro_seq="+reappeared+";eventos_monitor="+monitorEvents);
         System.out.println("NOTA: perdas/reaparecimentos usam multiconjunto sensor/temperatura; sem ID de pedido nao distinguem repeticoes identicas. Voto dividido inclui termos observados sem lider no fim da janela. Coincidencia nao prova commit por maioria.");
-        boolean ok=unsafe==0&&regressions==0&&badStates==0&&missing==0&&differences==0;
+        System.out.println("MAIORIA;eleicoes_invalidas="+invalidMajorities);
+        boolean ok=unsafe==0&&regressions==0&&badStates==0&&missing==0&&differences==0&&invalidMajorities==0;
         System.out.println("RaftCheck "+(ok?"PASS":"FAIL"));return ok;
     }
 }

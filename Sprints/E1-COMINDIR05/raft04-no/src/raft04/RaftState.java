@@ -67,8 +67,22 @@ public final class RaftState {
         try {
             Path tmp = stateFile.resolveSibling(stateFile.getFileName() + ".tmp");
             Files.writeString(tmp, term + ";" + votedFor + "\n", StandardCharsets.UTF_8);
-            Files.move(tmp, stateFile,
-                    StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+            // Windows can transiently deny rename while another process scans
+            // the file. Retry only that condition; never publish before success.
+            for (int attempt = 0; ; attempt++) {
+                try {
+                    Files.move(tmp, stateFile,
+                            StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+                    break;
+                } catch (java.nio.file.AccessDeniedException busy) {
+                    if (attempt >= 19) throw busy;
+                    try { Thread.sleep(10); }
+                    catch (InterruptedException interrupted) {
+                        Thread.currentThread().interrupt();
+                        throw new IOException("Persistencia interrompida", interrupted);
+                    }
+                }
+            }
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }

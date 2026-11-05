@@ -33,7 +33,13 @@ public final class RecordFile {
         Path tmp=path.resolveSibling(path.getFileName()+".tmp");
         List<String> lines=new ArrayList<>();for(SensorRecord r:next)lines.add(r.toLine());
         Files.write(tmp,lines,StandardCharsets.UTF_8);
-        Files.move(tmp,path,StandardCopyOption.REPLACE_EXISTING,StandardCopyOption.ATOMIC_MOVE);
+        for(int attempt=0;;attempt++){
+            try{Files.move(tmp,path,StandardCopyOption.REPLACE_EXISTING,StandardCopyOption.ATOMIC_MOVE);break;}
+            catch(AccessDeniedException busy){
+                if(attempt>=19)throw busy;
+                try{Thread.sleep(10);}catch(InterruptedException e){Thread.currentThread().interrupt();throw new IOException("Truncagem interrompida",e);}
+            }
+        }
         records=next;
     }
 }

@@ -162,7 +162,9 @@ public class Producer {
             int k = partitioner.of(sensor);
             if (i == 0) firstSendTime = System.currentTimeMillis();
             warn(k, sensor);
+            long sent = System.currentTimeMillis();
             pubSub.publish(Wire.topicIn(k), message);
+            sent(k, sensor, temperature, sent);
             counts[k]++;
             if (i == n - 1) lastSendTime = System.currentTimeMillis();
             System.out.println("Publicado em " + Wire.topicIn(k) + ": " + message + " → p" + k);

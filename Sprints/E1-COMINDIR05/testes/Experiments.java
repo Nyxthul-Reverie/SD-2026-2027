@@ -22,6 +22,7 @@ public final class Experiments {
     private static void append(Path p,String s)throws IOException{Files.writeString(p,s+System.lineSeparator(),StandardCharsets.UTF_8,StandardOpenOption.CREATE,StandardOpenOption.APPEND);}
     private static final class Run implements AutoCloseable {
         final Path dir;final Map<String,Process> processes=new LinkedHashMap<>();final long min,max;final String mutation;
+        final Map<String,Long> deadlines=new HashMap<>();
         Path nodeClasses;
         Run(String name,long min,long max,String mutation)throws Exception{
             this.min=min;this.max=max;this.mutation=mutation;
@@ -31,7 +32,7 @@ public final class Experiments {
         }
         Process start(String key,String project,String cls,String...args)throws Exception{
             List<String> cmd=new ArrayList<>(List.of(java,"-Dfile.encoding=UTF-8","-Dstdout.encoding=UTF-8","-Dstderr.encoding=UTF-8",
-                "-Draft04.api=http://127.0.0.1:5005/api/v0","-Draft04.eleicaoMin="+min,"-Draft04.eleicaoMax="+max,
+                "-Draft04.api=http://127.0.0.1:5005/api/v0","-Draft04.eleicaoMin="+deadlines.getOrDefault(key,min),"-Draft04.eleicaoMax="+deadlines.getOrDefault(key,max),
                 "-cp",(project.equals("raft04-no")?nodeClasses:root.resolve(project+"/out")).toString(),"raft04."+cls));
             cmd.addAll(Arrays.asList(args));
             Process p=new ProcessBuilder(cmd).directory(dir.toFile()).redirectOutput(ProcessBuilder.Redirect.appendTo(dir.resolve(key+"-console.txt").toFile())).redirectErrorStream(true).start();
@@ -83,10 +84,12 @@ public final class Experiments {
         }
         void finish(boolean correct)throws Exception{
             close();
+            int published=read(dir.resolve("produtor-console.txt")).split("Publicado em",-1).length-1;
+            require(lines(dir.resolve("produtor.txt")).size()==published,"produtor.txt nao corresponde aos envios publicados");
             String raft=checker("RaftCheck"),causal=checker("CausalCheck");
             if(correct){require(raft.contains("RaftCheck PASS"),raft);require(causal.contains("CausalCheck PASS"),causal);}
             String sums=Arrays.stream(raft.split("\\R")).filter(l->l.startsWith("RESUMO;")||l.startsWith("PRIMEIRO_LIDER;")||l.startsWith("FALHA;")).reduce("",(a,b)->a+b+"\n");
-            Files.writeString(dir.resolve("resultado.md"),"Estado: "+(correct?"PASS":"MUTACAO OBSERVADA: conferir verificadores")+"\n\n"+sums,StandardCharsets.UTF_8);
+            Files.writeString(dir.resolve("resultado.md"),"Estado: "+(correct?"PASS":"MUTACAO EXECUTADA: interpretar efeito nos logs")+"\n\n"+sums,StandardCharsets.UTF_8);
             summary.add(dir.getFileName()+";"+(correct?"PASS":"MUTACAO")+";"+sums.replace("\n"," | "));
             Files.write(suite.resolve("resumo.csv"),summary,StandardCharsets.UTF_8);
             System.out.println("CONCLUIDO "+dir.getFileName()+" "+(correct?"PASS":"MUTACAO"));System.out.flush();
@@ -138,7 +141,10 @@ public final class Experiments {
             r.send("S02 20.6");
             if(mutation==null){
                 waitFor(()->r.records(1,current).size()==3,4000,"novo seq3");
-            }else Thread.sleep(3000);
+            }else {
+                Thread.sleep(3000);
+                if(mutation.equals("zero"))require(read(r.dir.resolve("p1-n"+current+"-console.txt")).contains("V[k] diferente de seq"),"Falha dos relogios nao observada");
+            }
             r.node(1,old);Thread.sleep(6000);
             if(mutation==null){
                 r.settle();require(read(r.dir.resolve("eventos-p1-n"+old+".txt")).contains(";TRUNCADO;"),"Figura sem truncagem");
@@ -198,8 +204,41 @@ public final class Experiments {
             Process test=new ProcessBuilder(java,"-cp",testOut+File.pathSeparator+r.nodeClasses,"raft04.FaultTest",kind,r.dir.toString()).redirectErrorStream(true).start();
             String result=new String(test.getInputStream().readAllBytes(),StandardCharsets.UTF_8);int status=test.waitFor();
             Files.writeString(r.dir.resolve("FaultTest.txt"),result,StandardCharsets.UTF_8);require(status==0,result);
+            String raft=r.checker("RaftCheck"),causal=r.checker("CausalCheck");
+            require(raft.contains("RaftCheck FAIL"),"Verificador nao detetou a falha dirigida");
+            Files.writeString(r.dir.resolve("resultado.md"),"Teste dirigido da classe alterada: PASS. RaftCheck: FAIL esperado. CausalCheck: "+(causal.contains("CausalCheck PASS")?"PASS":"FAIL")+". Nao e ensaio de rede.\n",StandardCharsets.UTF_8);
             System.out.println(result);summary.add("mutacao-"+kind+";DIRIGIDO_PASS;nao e ensaio distribuido completo");
             Files.write(suite.resolve("resumo.csv"),summary,StandardCharsets.UTF_8);
+        }
+    }
+
+    private static void outdatedCandidate()throws Exception{
+        try(Run r=new Run("mutacao-atualizacao",6000,12000,"atualizacao")){
+            r.deadlines.put("p1-n1",6000L);r.deadlines.put("p1-n2",12000L);r.deadlines.put("p1-n3",18000L);
+            r.boot(true,1);require(r.leader(1)==1,"Lider inicial dirigido inesperado");
+            r.isolate(1,2);r.send("S02 20.1");r.send("S05 20.2");
+            waitFor(()->r.records(1,3).size()==2,8000,"Copia atualizada");
+            r.kill(1,1,true);
+            waitFor(()->r.term(1,2)>=2,16000,"Candidatura isolada");
+            r.heal(1,2);
+            waitFor(()->r.leader(1)==2,35000,"Candidato atrasado eleito sem upToDate");
+            require(r.records(1,2).isEmpty(),"Candidato nao estava atrasado");
+            r.node(1,1);Thread.sleep(6000);r.settle();
+            require(r.records(1,3).isEmpty(),"Mutacao nao descartou a copia atualizada");
+            r.finish(false);
+        }
+    }
+
+    private static void volatileNetwork()throws Exception{
+        try(Run r=new Run("mutacao-volatil-rede",6000,12000,"volatil")){
+            r.deadlines.put("p1-n1",6000L);r.deadlines.put("p1-n2",12000L);r.deadlines.put("p1-n3",18000L);
+            r.boot(false,1);require(r.leader(1)==1,"Lider inicial inesperado");
+            require(read(r.dir.resolve("eventos-p1-n3.txt")).contains("candidato=n1;concedido"),"Eleitor nao concedeu voto inicial");
+            r.isolate(1,1);r.kill(1,2,false);r.kill(1,3,false);
+            r.node(1,3);r.node(1,2);
+            waitFor(()->read(r.dir.resolve("eventos-p1-n2.txt")).contains(";LIDER;p1;termo=1;"),25000,"Segundo lider no mesmo termo apos perda do voto");
+            r.finish(false);
+            require(read(r.dir.resolve("RaftCheck.txt")).contains("termos_multiplos_lideres=1"),"RaftCheck nao mostrou dois lideres");
         }
     }
 
@@ -220,9 +259,13 @@ public final class Experiments {
             if(mode.equals("c")||mode.equals("all"))for(int j=1;j<=3;j++)failure(j);
             if(mode.equals("d")||mode.equals("all"))partition("d-isolamentos",null);
             if(mode.equals("e")||mode.equals("all"))quorum();
-            if(mode.equals("faults")||mode.equals("all")){
+            if(mode.equals("statefaults")||mode.equals("faults")||mode.equals("all")){
                 mutationUnit("maioria");mutationUnit("volatil");
-                figure("mutacao-atualizacao","atualizacao");
+            }
+            if(mode.equals("faults")||mode.equals("networkfaults")||mode.equals("all")){
+                try(Run r=new Run("mutacao-maioria-rede",6000,12000,"maioria")){r.boot(false,91);Thread.sleep(2200);r.finish(false);}
+                volatileNetwork();
+                outdatedCandidate();
                 partition("mutacao-obsoleto","obsoleto");
                 figure("mutacao-zero","zero");
             }

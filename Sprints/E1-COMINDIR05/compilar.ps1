@@ -10,3 +10,4 @@ foreach ($project in @('raft04-no','raft04-produtor','raft04-processador')) {
     if ($LASTEXITCODE -ne 0) { throw "Compilacao falhou: $project" }
     Write-Host "$project compilado para Java 11"
 }
+New-Item -ItemType Directory -Force -Path (Join-Path $PSScriptRoot 'execucoes/manual') | Out-Null
