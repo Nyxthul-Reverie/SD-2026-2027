@@ -1,4 +1,4 @@
-param([ValidateSet('a','b','c','d','e','statefaults','networkfaults','faults','all')][string]$Suite='all')
+param([ValidateSet('a','b','fixed','c','d','e','statefaults','networkfaults','faults','all')][string]$Suite='all')
 $ErrorActionPreference='Stop'
 $root=Split-Path $PSScriptRoot -Parent
 $out=Join-Path $PSScriptRoot 'out'

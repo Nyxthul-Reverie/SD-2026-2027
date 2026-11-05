@@ -23,6 +23,7 @@ public final class Experiments {
     private static final class Run implements AutoCloseable {
         final Path dir;final Map<String,Process> processes=new LinkedHashMap<>();final long min,max;final String mutation;
         final Map<String,Long> deadlines=new HashMap<>();
+        long barrier;
         Path nodeClasses;
         Run(String name,long min,long max,String mutation)throws Exception{
             this.min=min;this.max=max;this.mutation=mutation;
@@ -32,7 +33,7 @@ public final class Experiments {
         }
         Process start(String key,String project,String cls,String...args)throws Exception{
             List<String> cmd=new ArrayList<>(List.of(java,"-Dfile.encoding=UTF-8","-Dstdout.encoding=UTF-8","-Dstderr.encoding=UTF-8",
-                "-Draft04.api=http://127.0.0.1:5005/api/v0","-Draft04.eleicaoMin="+deadlines.getOrDefault(key,min),"-Draft04.eleicaoMax="+deadlines.getOrDefault(key,max),
+                "-Draft04.api=http://127.0.0.1:5005/api/v0","-Draft04.arranqueEm="+barrier,"-Draft04.eleicaoMin="+deadlines.getOrDefault(key,min),"-Draft04.eleicaoMax="+deadlines.getOrDefault(key,max),
                 "-cp",(project.equals("raft04-no")?nodeClasses:root.resolve(project+"/out")).toString(),"raft04."+cls));
             cmd.addAll(Arrays.asList(args));
             Process p=new ProcessBuilder(cmd).directory(dir.toFile()).redirectOutput(ProcessBuilder.Redirect.appendTo(dir.resolve(key+"-console.txt").toFile())).redirectErrorStream(true).start();
@@ -40,9 +41,14 @@ public final class Experiments {
         }
         void node(int k,int i)throws Exception{start("p"+k+"-n"+i,"raft04-no","PartitionNode",""+k,""+i,"3");}
         void boot(boolean clients,long seed)throws Exception{
+            if(min==max)barrier=System.currentTimeMillis()+5000;
             List<Integer> order=new ArrayList<>();for(int j=0;j<9;j++)order.add(j);if(seed>=0)Collections.shuffle(order,new Random(seed));
             for(int j:order)node(j/3,j%3+1);
-            waitFor(()->leader(0)>0&&leader(1)>0&&leader(2)>0,45000,"primeiros lideres");
+            if(min==max){
+                long until=System.nanoTime()+25000000000L;
+                while(System.nanoTime()<until&&!(leader(0)>0&&leader(1)>0&&leader(2)>0))Thread.sleep(50);
+                append(dir.resolve("observacoes.txt"),"JANELA_FIXA;lideres="+leader(0)+","+leader(1)+","+leader(2)+";0=nao eleito na janela");
+            }else waitFor(()->leader(0)>0&&leader(1)>0&&leader(2)>0,45000,"primeiros lideres");
             if(clients)clients();
         }
         void clients()throws Exception{
@@ -169,7 +175,16 @@ public final class Experiments {
             int next=r.leader(1);require(next>0&&next!=old,"Maioria nao elegeu");
             require(r.term(1,next)>oldTerm,"Termo nao aumentou");
             append(r.dir.resolve("observacoes.txt"),"DOIS_LIDERES;antigo=n"+old+";termo="+oldTerm+";novo=n"+next+";termo="+r.term(1,next));
+            long oldLength=r.records(1,old).size();
+            String delayed=new Batch(oldTerm,old,"127.0.0.1",Wire.nodePort(1,old),999,oldLength,oldLength==0?0:oldTerm,List.of()).encode();
             r.heal(1,old);Thread.sleep(6000);
+            if(mutation!=null){
+                // Replay a legitimate old-term header after the repair to make
+                // delayed obsolete delivery deterministic in this fault test.
+                Files.writeString(r.dir.resolve("replay-lote.txt"),delayed,StandardCharsets.UTF_8);
+                new IpfsPubSub("http://127.0.0.1:5005/api/v0").publish(Wire.topicData(1),delayed);
+                Thread.sleep(2000);
+            }
             if(mutation==null){
                 r.settle();
                 int follower=old==r.leader(1)?old%3+1:old;long before=r.term(1,follower);
@@ -179,6 +194,7 @@ public final class Experiments {
                 r.heal(1,follower);Thread.sleep(15000);r.settle();
             }
             r.finish(mutation==null);
+            if(mutation!=null)require(read(r.dir.resolve("RaftCheck.txt")).matches("(?s).*lotes_obsoletos_aceites=[1-9][0-9]*.*"),"Mutacao de termo obsoleto nao observada");
         }
     }
     private static void quorum()throws Exception{
@@ -256,6 +272,7 @@ public final class Experiments {
                     r.boot(false,j);Thread.sleep(2200);r.finish(true);
                 }
             }
+            if(mode.equals("fixed"))for(int j=0;j<5;j++)try(Run r=new Run("b-fixo-sincronizado-"+j,6000,6000,null)){r.boot(false,300+j);Thread.sleep(2200);r.finish(true);}
             if(mode.equals("c")||mode.equals("all"))for(int j=1;j<=3;j++)failure(j);
             if(mode.equals("d")||mode.equals("all"))partition("d-isolamentos",null);
             if(mode.equals("e")||mode.equals("all"))quorum();

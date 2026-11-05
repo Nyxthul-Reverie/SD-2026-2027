@@ -272,6 +272,9 @@ public final class PartitionNode {
         if(args.length<2||args.length>3)throw new IllegalArgumentException("PartitionNode <k> <i> [N]");
         int k=Integer.parseInt(args[0]),i=Wire.node(Integer.parseInt(args[1])),n=args.length==3?Integer.parseInt(args[2]):3;
         if(n<1||k<0||k>=n||Wire.nodePort(k,i)>65535)throw new IllegalArgumentException("Particao/porto invalido");
+        // Optional experiment-only launch barrier; no effect on protocol timers.
+        long startAt=Long.getLong("raft04.arranqueEm",0L);
+        if(startAt>System.currentTimeMillis())Thread.sleep(Math.max(0,startAt-System.currentTimeMillis()));
         new PartitionNode(k,i,n).start();
     }
 }

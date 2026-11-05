@@ -37,7 +37,7 @@ public final class RaftCheck {
         Map<String,List<String>> votes=new TreeMap<>();
         Map<Integer,Long> boot=new TreeMap<>();Map<String,Long> candidateTime=new HashMap<>(),electedTime=new HashMap<>();
         Map<Integer,Long> firstLeader=new TreeMap<>();Map<Integer,Event> latestLeader=new TreeMap<>();
-        int regressions=0,badStates=0,missing=0;
+        int regressions=0,badStates=0,missing=0,obsoleteAccepted=0;
         for(int k=0;k<n;k++)for(int node=1;node<=Wire.GRUPO;node++){
             String key="p"+k+"-n"+node;Path data=dir.resolve("no-"+key+".txt");
             if(!Files.exists(data))missing++;
@@ -52,6 +52,7 @@ public final class RaftCheck {
                 String term=e.field("termo");
                 if(!term.isEmpty()){
                     long t=Long.parseLong(term);
+                    if(e.type.equals("RECEBIDO")&&t<previous)obsoleteAccepted++;
                     if(t<previous&&(e.type.equals("ARRANQUE")||e.type.equals("CANDIDATO")||e.type.equals("LIDER")))regressions++;
                     if(e.type.equals("ARRANQUE")||e.type.equals("CANDIDATO")||e.type.equals("LIDER")){previous=Math.max(previous,t);maxEventTerm=Math.max(maxEventTerm,t);}
                 }
@@ -117,24 +118,29 @@ public final class RaftCheck {
                 if(union.add(k+";"+r.toLine())&&!r.getSensorId().startsWith("ALARM-"))available.merge(k+";"+reading(r),1,Integer::sum);
             }
         }
-        List<String> sent=lines(dir.resolve("produtor.txt"));int lost=0;
+        List<String> sent=lines(dir.resolve("produtor.txt"));List<String> lostReadings=new ArrayList<>();int lost=0;
         for(String line:sent){
             String[] f=line.split(";",-1);if(f.length!=4)throw new IllegalArgumentException("produtor.txt invalido");
             String key=Integer.parseInt(f[1].substring(1))+";"+f[2]+";"+Double.parseDouble(f[3]);
-            int count=available.getOrDefault(key,0);if(count==0)lost++;else available.put(key,count-1);
+            int count=available.getOrDefault(key,0);if(count==0){lost++;lostReadings.add(line);}else available.put(key,count-1);
         }
         if(failureFile!=null)for(String line:lines(failureFile)){
             String[] f=line.split(";");int k=Integer.parseInt(f[0].substring(1)),node=Integer.parseInt(f[1].substring(1));long time=Long.parseLong(f[2]);
             long failedTerm=-1;for(Publication p:hbs)if(p.k==k&&p.node==node&&p.time<=time)failedTerm=p.term;
             Publication next=null;for(Publication p:hbs)if(p.k==k&&p.time>=time&&p.term>failedTerm){next=p;break;}
             int inWindow=0;for(String s:sent){String[]sf=s.split(";");long st=Long.parseLong(sf[0]);if(sf[1].equals("p"+k)&&st>=time&&(next==null||st<next.time))inWindow++;}
-            System.out.println("FALHA;p"+k+";no=n"+node+";instante="+time+";indisponibilidade_ms="+(next==null?"NA":next.time-time)+";enviadas_intervalo="+inWindow);
+            int lostInWindow=0;for(String s:lostReadings){String[]sf=s.split(";");long st=Long.parseLong(sf[0]);if(sf[1].equals("p"+k)&&st>=time&&(next==null||st<next.time))lostInWindow++;}
+            System.out.println("FALHA;p"+k+";no=n"+node+";instante="+time+";indisponibilidade_ms="+(next==null?"NA":next.time-time)+";enviadas_intervalo="+inWindow+";perdidas_intervalo="+lostInWindow);
         }
-        int truncated=0,reappeared=0;
+        int truncated=0,reappeared=0,lostByTruncation=0;
+        Set<String> uniqueDiscarded=new HashSet<>();Map<String,Integer> lostCounts=new HashMap<>();
+        for(String line:lostReadings){String[] f=line.split(";");lostCounts.merge(Integer.parseInt(f[1].substring(1))+";"+f[2]+";"+Double.parseDouble(f[3]),1,Integer::sum);}
         for(Event e:events){
             if(e.type.equals("TRUNCADO")){truncated+=Integer.parseInt(e.field("descartados"));System.out.println(e.line);}
             if(e.type.equals("DESCARTADO")){
                 SensorRecord old=SensorRecord.fromLine(e.line.substring(e.line.indexOf("registo=")+8),n);
+                String key=e.k+";"+reading(old);
+                if(!old.getSensorId().startsWith("ALARM-")&&uniqueDiscarded.add(e.k+";"+old.toLine())&&lostCounts.getOrDefault(key,0)>0){lostByTruncation++;lostCounts.put(key,lostCounts.get(key)-1);}
                 Event finalLeader=latestLeader.get(e.k);
                 if(finalLeader!=null)for(SensorRecord r:logs.get("p"+e.k+"-n"+finalLeader.node))if(r.getSeq()!=old.getSeq()&&reading(r).equals(reading(old))){reappeared++;break;}
             }
@@ -142,7 +148,9 @@ public final class RaftCheck {
         System.out.println("RESUMO;termos="+terms.size()+";votos_divididos="+split+";termos_multiplos_lideres="+unsafe+";regressoes_termo="+regressions+";estados_invalidos="+badStates+";ficheiros_ausentes="+missing+";seq_divergentes="+differences+";comprimentos_diferentes="+lengthDifferences+";enviadas="+sent.size()+";perdidas="+lost+";truncados="+truncated+";reaparecidos_outro_seq="+reappeared+";eventos_monitor="+monitorEvents);
         System.out.println("NOTA: perdas/reaparecimentos usam multiconjunto sensor/temperatura; sem ID de pedido nao distinguem repeticoes identicas. Voto dividido inclui termos observados sem lider no fim da janela. Coincidencia nao prova commit por maioria.");
         System.out.println("MAIORIA;eleicoes_invalidas="+invalidMajorities);
-        boolean ok=unsafe==0&&regressions==0&&badStates==0&&missing==0&&differences==0&&invalidMajorities==0;
+        System.out.println("PERDAS;leituras_normais_truncadas_ausentes="+lostByTruncation);
+        System.out.println("TERMOS;lotes_obsoletos_aceites="+obsoleteAccepted);
+        boolean ok=unsafe==0&&regressions==0&&badStates==0&&missing==0&&differences==0&&invalidMajorities==0&&obsoleteAccepted==0;
         System.out.println("RaftCheck "+(ok?"PASS":"FAIL"));return ok;
     }
 }
