@@ -5,7 +5,12 @@ import java.nio.file.*;
 import java.util.*;
 import java.util.regex.*;
 
-/** Observational checker, not a proof of complete Raft or durable commits. */
+/**
+ * Verificador observacional da COMINDIR05 (4.1/8): cruza eventos, estados,
+ * publicações, históricos e envios do produtor. Pressupõe timestamps físicos
+ * comparáveis porque os processos dos ensaios correm na mesma máquina.
+ * PASS não prova Raft completo, ausência de perdas ou commit por maioria.
+ */
 public final class RaftCheck {
     private static final class Event {
         final long time;final String type;final int k,node;final String line;
@@ -28,6 +33,7 @@ public final class RaftCheck {
             if(!analyse(Integer.parseInt(args[0]),Path.of(args[1]),args.length==3?Path.of(args[2]):null))System.exit(1);
         }catch(Exception e){System.err.println("RaftCheck FAIL: "+e);System.exit(1);}
     }
+    /** Recolhe as três cópias por partição e imprime as métricas exigidas na ficha. */
     public static boolean analyse(int n,Path dir,Path failureFile)throws IOException{
         if(n<1||!Files.isDirectory(dir))throw new IllegalArgumentException("N/pasta invalidos");
         List<Event> events=new ArrayList<>();List<Publication> hbs=new ArrayList<>();
@@ -71,6 +77,9 @@ public final class RaftCheck {
             }else if(maxEventTerm>0)badStates++;
             for(String line:lines(dir.resolve("hb-"+key+".txt")))hbs.add(new Publication(k,node,line));
         }
+        // Reconstrói cada eleição por (partição,termo), independentemente do nó
+        // que escreveu o evento. Lideranças simultâneas em termos distintos
+        // não são o erro de dois líderes eleitos NO MESMO termo.
         events.sort(Comparator.comparingLong(e->e.time));hbs.sort(Comparator.comparingLong(p->p.time));
         int monitorEvents=0;
         try(DirectoryStream<Path> stream=Files.newDirectoryStream(dir,"monitor-*.txt")){
@@ -103,6 +112,8 @@ public final class RaftCheck {
             System.out.println("TERMO;"+key+";candidatos="+candidates.getOrDefault(key,Set.of())+";lideres="+ls+";votos="+votes.getOrDefault(key,List.of())+";voto_dividido="+ls.isEmpty()+";eleicao_ms="+(start==null||end==null?"NA":end-start));
         }
         for(int k=0;k<n;k++)System.out.println("PRIMEIRO_LIDER;p"+k+";tempo_ms="+(!boot.containsKey(k)||!firstLeader.containsKey(k)?"NA":firstLeader.get(k)-boot.get(k)));
+        // A ficha compara posições até ao menor comprimento. Reportamos também
+        // diferenças de comprimento; o harness exige igualdade integral à parte.
         int differences=0,lengthDifferences=0;
         Map<String,Integer> available=new HashMap<>();Set<String> union=new HashSet<>();
         for(int k=0;k<n;k++){
@@ -118,12 +129,18 @@ public final class RaftCheck {
                 if(union.add(k+";"+r.toLine())&&!r.getSensorId().startsWith("ALARM-"))available.merge(k+";"+reading(r),1,Integer::sum);
             }
         }
+        // Conta ocorrências de sensor/temperatura e elimina cópias replicadas.
+        // Sem ID de pedido, envios idênticos não têm identidade inequívoca;
+        // por isso estas perdas são uma medição observada com essa limitação.
         List<String> sent=lines(dir.resolve("produtor.txt"));List<String> lostReadings=new ArrayList<>();int lost=0;
         for(String line:sent){
             String[] f=line.split(";",-1);if(f.length!=4)throw new IllegalArgumentException("produtor.txt invalido");
             String key=Integer.parseInt(f[1].substring(1))+";"+f[2]+";"+Double.parseDouble(f[3]);
             int count=available.getOrDefault(key,0);if(count==0){lost++;lostReadings.add(line);}else available.put(key,count-1);
         }
+        // Indisponibilidade: da falha anotada até ao primeiro LOTE publicado
+        // por um termo superior. Enviadas no intervalo não são necessariamente
+        // todas perdidas: cruza-se também com as ausentes nos históricos finais.
         if(failureFile!=null)for(String line:lines(failureFile)){
             String[] f=line.split(";");int k=Integer.parseInt(f[0].substring(1)),node=Integer.parseInt(f[1].substring(1));long time=Long.parseLong(f[2]);
             long failedTerm=-1;for(Publication p:hbs)if(p.k==k&&p.node==node&&p.time<=time)failedTerm=p.term;
@@ -132,6 +149,9 @@ public final class RaftCheck {
             int lostInWindow=0;for(String s:lostReadings){String[]sf=s.split(";");long st=Long.parseLong(sf[0]);if(sf[1].equals("p"+k)&&st>=time&&(next==null||st<next.time))lostInWindow++;}
             System.out.println("FALHA;p"+k+";no=n"+node+";instante="+time+";indisponibilidade_ms="+(next==null?"NA":next.time-time)+";enviadas_intervalo="+inWindow+";perdidas_intervalo="+lostInWindow);
         }
+        // TRUNCADO soma cópias de registos descartados, incluindo alarmes.
+        // A contagem de IN normais perdidos por truncagem deduplica essas cópias.
+        // Reaparecimento com outro seq usa sensor/temperatura, não um ID global.
         int truncated=0,reappeared=0,lostByTruncation=0;
         Set<String> uniqueDiscarded=new HashSet<>();Map<String,Integer> lostCounts=new HashMap<>();
         for(String line:lostReadings){String[] f=line.split(";");lostCounts.merge(Integer.parseInt(f[1].substring(1))+";"+f[2]+";"+Double.parseDouble(f[3]),1,Integer::sum);}
@@ -150,6 +170,8 @@ public final class RaftCheck {
         System.out.println("MAIORIA;eleicoes_invalidas="+invalidMajorities);
         System.out.println("PERDAS;leituras_normais_truncadas_ausentes="+lostByTruncation);
         System.out.println("TERMOS;lotes_obsoletos_aceites="+obsoleteAccepted);
+        // Perdas e truncagens são possíveis no protocolo da ficha e não tornam
+        // este resultado FAIL por si só. O PASS refere-se às verificações abaixo.
         boolean ok=unsafe==0&&regressions==0&&badStates==0&&missing==0&&differences==0&&invalidMajorities==0&&obsoleteAccepted==0;
         System.out.println("RaftCheck "+(ok?"PASS":"FAIL"));return ok;
     }

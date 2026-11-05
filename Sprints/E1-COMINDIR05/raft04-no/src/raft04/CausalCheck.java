@@ -2,6 +2,11 @@ package raft04;
 import java.nio.file.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+/**
+ * Verifica seq contíguo, V[k]=seq, termos não decrescentes e L crescente nas
+ * cópias. Entre partições, verifica se a ordem vetorial implica a ordem de L.
+ * Não demonstra entrega de todos os IN nem desfaz efeitos de ramos truncados.
+ */
 public final class CausalCheck {
     public static void main(String[] args)throws Exception{
         if(args.length!=2)throw new IllegalArgumentException("CausalCheck <N> <pasta>");
@@ -18,12 +23,17 @@ public final class CausalCheck {
                     if(!rs.isEmpty()&&(r.getLamport()<=rs.get(rs.size()-1).getLamport()||r.getTerm()<rs.get(rs.size()-1).getTerm()))errors++;
                     rs.add(r);
                 }
+                // Para a comparação entre partições escolhe uma cópia pelo
+                // maior termo do último registo e depois pelo comprimento.
+                // Nos ensaios corretos o harness já exige cópias finais iguais.
                 long t=rs.isEmpty()?0:rs.get(rs.size()-1).getTerm();
                 if(chosen==null||t>bestTerm||(t==bestTerm&&rs.size()>chosen.size())){chosen=rs;bestTerm=t;}
             }
             if(chosen==null){errors++;continue;}
             for(SensorRecord r:chosen){all.add(r);parts.add(k);}
         }
+        // Vetores concorrentes não impõem ordem de Lamport nesta verificação.
+        // A implicação verificada é causalidade -> L menor, nunca a recíproca.
         int causal=0;
         for(int a=0;a<all.size();a++)for(int b=a+1;b<all.size();b++){
             if(parts.get(a).equals(parts.get(b)))continue;

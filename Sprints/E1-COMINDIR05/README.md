@@ -101,31 +101,33 @@ organização da ficha. Compilar e executar cada projeto com o seu classpath.
 
 ## Guia para a defesa oral
 
-Referências abaixo relativas à pasta desta ficha. Os números indicam o código
-na versão de implementação auditada; usar o nome do método como referência duradoura.
+Referências abaixo relativas à pasta desta ficha. Os números indicam o início
+dos métodos após a documentação do código; usar o nome do método como referência duradoura.
+Os comentários nos fontes explicam as decisões de eleição, persistência,
+sincronização, relógios e recuperação, incluindo as garantias e limites da ficha.
 
 | Conceito / pergunta | Resposta e referência |
 |---|---|
-| Porque deixou de existir líder fixo? | Cada PartitionNode pode mudar de papel. `PartitionNode.election`, linhas 78–99. |
-| Como começa a eleição? | `RaftState.tick` (103–115) avança termo, vota em si, persiste e renova prazo; `electionTick` publica depois. |
-| Porque dois votos? | Em G=3 a maioria é estritamente maior que G/2. `RaftState.onVote`, 137–147. |
+| Porque deixou de existir líder fixo? | Cada PartitionNode pode mudar de papel. `PartitionNode.election`, linha 97. |
+| Como começa a eleição? | `RaftState.tick` (linha 126) avança termo, vota em si, persiste e renova prazo; `electionTick` publica depois. |
+| Porque dois votos? | Em G=3 a maioria é estritamente maior que G/2. `RaftState.onVote`, linha 168. |
 | Porque dois candidatos não vencem o mesmo termo? | As maiorias intersetam-se e cada eleitor persiste um único candidato nesse termo. |
 | Termo é Lamport? | Não. Termo identifica a época da eleição; Lamport carimba eventos aceites. |
-| Porque persistir antes de enviar? | Evita esquecer um voto após crash e conceder outro no mesmo termo. `persist`, 66–89. |
+| Porque persistir antes de enviar? | Evita esquecer um voto após crash e conceder outro no mesmo termo. `RaftState.persist`, linha 84. |
 | ATOMIC_MOVE garante corte de energia? | Garante substituição atómica; sem forçar escrita não há garantia absoluta de durabilidade física. |
 | Porque conceder novamente ao mesmo candidato? | Um pedido pode repetir-se; a resposta continua idempotente para o mesmo termo/candidato. |
-| Porque votedFor volta a zero? | O voto anterior pertence ao termo anterior. `adoptTerm`, 92–100. |
-| Restrição de histórico? | Compara primeiro último termo e depois último seq. `onVoteRequest`, 118–134. |
+| Porque votedFor volta a zero? | O voto anterior pertence ao termo anterior. `RaftState.adoptTerm`, linha 110. |
+| Restrição de histórico? | Compara primeiro último termo e depois último seq. `RaftState.onVoteRequest`, linha 145. |
 | Porque renovar o prazo várias vezes? | Evita candidaturas enquanto o nó reconhece um líder ou já apoia uma eleição. |
 | Como o líder se demite? | Mensagens de termo superior passam por RaftState sob o monitor do nó; a tarefa de heartbeat é cancelada. |
-| IN durante demissão? | A verificação de papel/termo e o append estão sob o mesmo monitor. `PartitionNode.input`, 108–118. |
+| IN durante demissão? | A verificação de papel/termo e o append estão sob o mesmo monitor. `PartitionNode.input`, linha 128. |
 | E um lote já em HTTP quando o líder se demite? | Conserva o termo capturado; os nós em termo superior rejeitam-no. Não se pode retirar uma mensagem já em trânsito. |
-| Porque restaurar relógios? | O novo evento continua o histórico da partição; começar em zero quebra V[k]=seq. `restoreClocks`, 40–44. |
+| Porque restaurar relógios? | O novo evento continua o histórico da partição; começar em zero quebra V[k]=seq. `PartitionNode.restoreClocks`, linha 52. |
 | Porque heartbeat não faz tick de L/V? | Não cria um novo registo de sensor; só anuncia estado e transporta eventos existentes. |
-| Onde fecha o lote? | `sendBatch`, 123–136: captura termo, lista e metadados sob lock; faz HTTP fora dele. |
+| Onde fecha o lote? | `PartitionNode.sendBatch`, linha 155: captura termo, lista e metadados sob lock; faz HTTP fora dele. |
 | Ordem dos locks? | Monitor do nó, depois RaftState/RecordFile/log. Nenhuma callback volta ao monitor do nó pela ordem inversa. |
-| TCP durante uma nova eleição? | A resposta só é instalada se termo, líder e revisão local continuarem iguais. `recover`, 216–221. |
-| Como resolve divergência? | Recua pelos blocos de termo, encontra âncora, identifica primeira diferença e substitui só a cauda. `recover`, 202–236. |
+| TCP durante uma nova eleição? | A resposta só é instalada se termo, líder e revisão local continuarem iguais. `PartitionNode.recover`, linha 246. |
+| Como resolve divergência? | Recua pelos blocos de termo, encontra âncora, identifica primeira diferença e substitui só a cauda. `PartitionNode.recover`, linha 246. |
 | Mesmo seq em outro termo é duplicado? | Não. Pode ser outro evento. A identidade inclui termo; o processador usa p/seq/termo. |
 | Dois líderes simultâneos? | Podem julgar-se líderes em termos distintos. A maioria impede dois eleitos no mesmo termo sob as hipóteses da ficha. |
 | Porque não CP rigoroso? | Não há confirmação de cada escrita por maioria. O líder antigo isolado ainda aceita IN e essas escritas podem desaparecer. |
@@ -139,9 +141,9 @@ na versão de implementação auditada; usar o nome do método como referência 
 | Causalidade de um ramo truncado? | Os alarmes já emitidos não são desfeitos. A ficha não implementa transações entre partições nem entrega causal. |
 | O verificador prova ausência de perda? | Não: mede o histórico final e envios registados. Repetições idênticas sem ID são ambíguas. |
 | O que significa C, A e P? | C: operações observadas como uma ordem única consistente; A: cada pedido a um nó não falhado obtém resposta, mesmo sob partição; P: o modelo admite perda de comunicação. Aceitar um IN localmente não demonstra, por si só, A ou C do serviço completo. |
-| Quando onBatch escreveria ERRO? | Um nó que ainda é LIDER recebe um lote de outro líder no mesmo termo. Um termo superior já o teria demitido. Com maioria e voto persistente único, dois líderes eleitos no mesmo termo são impossíveis nas hipóteses da ficha. `RaftState.onBatch`, 150–165. |
+| Quando onBatch escreveria ERRO? | Um nó que ainda é LIDER recebe um lote de outro líder no mesmo termo. Um termo superior já o teria demitido. Com maioria e voto persistente único, dois líderes eleitos no mesmo termo são impossíveis nas hipóteses da ficha. `RaftState.onBatch`, linha 186. |
 | Crash entre persistir e publicar PEDIDO_VOTO? | Reinicia SEGUIDOR com termo e voto já guardados; não desfaz esse voto nem assume liderança. Espera um novo prazo e, se necessário, candidata-se no termo seguinte. |
-| Porque responder quando recusa voto? | A resposta transporta o termo atual; um candidato atrasado pode adotar esse termo e demitir-se. `election`, 81–87. |
+| Porque responder quando recusa voto? | A resposta transporta o termo atual; um candidato atrasado pode adotar esse termo e demitir-se. `PartitionNode.election`, linha 97. |
 | Quando surge o primeiro LOTE? | Sem voto dividido e com entrega/agendamento rápidos, a primeira candidatura ocorre entre 6 e 12 s, mais até 200 ms de verificação; seguem-se voto, persistência e publicação imediata. Não há limite absoluto de 12,2 s em presença de atrasos ou eleições repetidas. |
 | Repetir IN recebido mas não publicado no termo anterior? | É um novo evento para o líder atual e recebe o próximo seq e termo atual; não há ID de pedido para reconhecer semanticamente o reenvio. A cauda antiga pode ser truncada. |
 | Mesmo seq, novo termo: repete alarme? | Sim, se justificar: `(seq,termo)` identifica outro evento. Pode aumentar a contagem de alarmes e não desfaz os já emitidos pelo ramo antigo. `AlarmProcessor.process`. |

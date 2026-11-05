@@ -1,16 +1,24 @@
 package raft04;
 import java.nio.file.*;
 import java.util.*;
+/**
+ * Testes dirigidos sem Kubo. Exercitam as classes reais e uma recuperação por
+ * socket local; não substituem os ensaios distribuídos de Experiments.
+ * Asserções falhadas interrompem a execução, em vez de imprimir um PASS genérico.
+ */
 public final class ProtocolTest {
     private static void require(boolean ok,String text){if(!ok)throw new AssertionError(text);}
     private static void rejects(Runnable action){try{action.run();throw new AssertionError("Aceitou mensagem invalida");}catch(IllegalArgumentException|java.time.DateTimeException expected){}}
     public static void main(String[] args)throws Exception{
         Path dir=Path.of(args[0]);Files.createDirectories(dir);List<String> events=new ArrayList<>();
         Path state=dir.resolve("unit-state.txt");RaftState r=new RaftState(1,1,3,1,1,state,events::add);
+        // Persistência e maioria: o voto próprio já está no disco antes de
+        // publicar; recebê-lo de novo não conta como segundo eleitor.
         Thread.sleep(4);long term=r.tick();require(term==1,"Eleicao inicial");require(Files.readString(state).trim().equals("1;1"),"Persistencia antes de publicar");
         require(!r.onVote(1,1,1,true),"Voto proprio duplicado nao e maioria");
         require(r.onVote(1,2,1,true),"Dois votos elegem");require(r.termIfLeader()==1,"Papel lider");
         require(!r.onBatch(0,2),"Rejeita termo antigo");require(r.onBatch(2,2),"Demissao por termo superior");require(r.termIfLeader()==-1,"Demissao");
+        // Um reinício conserva termo/voto, mas volta sempre ao papel de seguidor.
         RaftState restart=new RaftState(1,1,3,1000,1000,state,events::add);
         require(restart.term()==2&&restart.role()==RaftState.Role.SEGUIDOR,"Reinicio como seguidor");
         require(restart.onVoteRequest(3,2,4,2,3,2).granted,"Candidato atualizado");
@@ -18,6 +26,7 @@ public final class ProtocolTest {
         RaftState again=new RaftState(1,1,3,1000,1000,state,events::add);
         require(!again.onVoteRequest(3,3,9,2,3,2).granted,"Voto sobrevive ao reinicio");
         require(!again.onVoteRequest(4,3,99,1,3,2).granted,"Termo ultimo registo tem prioridade");
+        // Formatos de rede, heartbeat sem corpo e rejeição de mensagens incoerentes.
         SensorRecord a=new SensorRecord(1,1,"S01",20,"2026-11-05T10:00:00",1,VectorClock.parse("1,0,0",3));
         Batch b=new Batch(1,1,"127.0.0.1",7100,1,1,1,List.of(a));
         require(Batch.decode(b.encode(),3).records.get(0).toLine().equals(a.toLine()),"Round trip");
@@ -37,6 +46,11 @@ public final class ProtocolTest {
 
     private static SensorRecord record(int seq,int term){return new SensorRecord(seq,term,"S01",20,"2026-11-05T10:00:00",seq,VectorClock.parse(seq+",0,0",3));}
 
+    /**
+     * Histórico local: termos 1,1,2,2,3,3; remoto: 1,1,4,4.
+     * Espera recuo por blocos (5->3->1), prefixo 1–2 preservado e nova cauda.
+     * A reflexão permite exercitar recover sem expor uma API pública de teste.
+     */
     private static void recoveryBlocksAndStaleReply()throws Exception{
         RecordFile original=new RecordFile("no-p0-n1.txt",3);
         for(int seq=1;seq<=6;seq++)original.append(record(seq,(seq+1)/2));
@@ -66,6 +80,8 @@ public final class ProtocolTest {
             Thread responder=new Thread(()->{
                 try(java.net.Socket socket=server.accept()){
                     java.io.BufferedReader in=new java.io.BufferedReader(new java.io.InputStreamReader(socket.getInputStream()));in.readLine();
+                    // Simula adotar outro termo enquanto o pedido TCP está em voo.
+                    // A resposta do termo 4 não pode truncar o histórico atual.
                     state.onBatch(5,2);
                     java.io.PrintWriter out=new java.io.PrintWriter(socket.getOutputStream(),true);out.println(remote.get(2).toLine());out.println("FIM");
                 }catch(Exception e){throw new RuntimeException(e);}

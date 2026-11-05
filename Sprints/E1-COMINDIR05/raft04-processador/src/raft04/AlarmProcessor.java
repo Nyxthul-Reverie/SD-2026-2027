@@ -8,6 +8,11 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Observa todas as partições e transforma leituras quentes em IN de alarme.
+ * Mantém o conhecimento causal recebido; o nó de destino carimba o novo
+ * evento. Não confirma escritas por maioria nem desfaz alarmes de ramos truncados.
+ */
 public class AlarmProcessor {
     private static final String DEFAULT_API = Wire.api();
     private final int n;
@@ -49,12 +54,15 @@ public class AlarmProcessor {
             System.out.println("REJEITADO: " + message);
             return;
         }
+        // Rejeitar liderança obsoleta antes de processar o corpo. Cada partição
+        // tem o seu maior termo observado e o seu detetor independente.
         if (!detectors[k].onHeartbeat(batch.term, batch.leader, batch.hb)) return;
         log.received(k, batch);
         for (SensorRecord record : batch.records) process(k, record);
     }
 
     private void process(int k, SensorRecord record) {
+        // Evita uma cadeia infinita de alarmes gerados a partir de outros alarmes.
         if (record.getSensorId().startsWith("ALARM-")) {
             return;
         }
@@ -63,22 +71,25 @@ public class AlarmProcessor {
         VectorClock alarmVector;
 
         synchronized (monitor) {
+            // As threads das partições partilham seen, Lamport e vetor.
+            // O mesmo seq noutro termo é outro evento e pode gerar novo alarme.
             String key = "p" + k + "#" + record.getSeq() + "@" + record.getTerm();
 
-            if (!seen.add(key)) { // Same message -> Ignore / seen.add(key) == false
+            if (!seen.add(key)) { // false: este evento já foi tratado.
                 return;
             }
 
-            // Atualiza os conhecimentos para todos os registos normais
+            // Integra o conhecimento de todos os registos normais, mesmo frios.
             lamport = Math.max(lamport, record.getLamport());
             vector.merge(record.getVector());
 
-            // Registo a baixo do limiar do alarme atualizam o clock mas obviamente nao
-            // criam alarme
+            // Uma leitura abaixo do limiar atualiza o conhecimento, sem criar alarme.
             if (record.getTemperature() < Wire.LIMIAR_ALARME) {
                 return;
             }
 
+            // Captura uma cópia coerente para publicar fora do monitor.
+            // Não faz tick aqui: o evento aceite na partição de destino fá-lo-á.
             alarmLamport = lamport;
             alarmVector = vector.copy();
         }
@@ -91,6 +102,8 @@ public class AlarmProcessor {
             if (detectors[j].state() == HeartbeatMonitor.State.SUSPEITO) {
                 System.out.println("AVISO: partição p" + j + " sem líder conhecido; alarme " + alarmSensor + " pode perder-se");
             }
+            // A suspeita é informativa: a ficha manda publicar na mesma,
+            // assumindo a possibilidade de perda se não houver líder a aceitar.
             pubSub.publish(Wire.topicIn(j), alarmMessage);
 
             System.out.println("ALARME: " + record.getSensorId() + " p" + k + "#" + record.getSeq() + " → p" + j);

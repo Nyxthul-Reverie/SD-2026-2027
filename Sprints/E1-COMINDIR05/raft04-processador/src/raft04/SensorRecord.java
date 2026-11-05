@@ -1,6 +1,12 @@
 package raft04;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+/**
+ * Registo imutável: seq;term;sensor;temperatura;timestamp;L;V.
+ * seq ordena a partição, term identifica a época em que o evento foi criado,
+ * L/V representam causalidade e timestamp é apenas o instante físico.
+ * O vetor é copiado ao entrar e sair para não alterar um evento já gravado.
+ */
 public final class SensorRecord {
     private final long seq,term,lamport;
     private final VectorClock vector;

@@ -1,5 +1,6 @@
 package raft04;
 import java.nio.file.*;
+/** Tópicos, formatos e parâmetros comuns aos três projetos da COMINDIR05. */
 public final class Wire {
     public static final long PERIODO_HB_MS=Long.getLong("raft04.periodo",2000L);
     public static final int FATOR_TIMEOUT=Integer.getInteger("raft04.fator",3);
@@ -18,6 +19,8 @@ public final class Wire {
     public static String topicData(int k) { return "raft04-p"+k; }
     public static String topicElection(int k) { return "raft04-eleicao-p"+k; }
     public static int nodePort(int k,int i) { return Integer.getInteger("raft04.portoBase",7100)+k*GRUPO+i-1; }
+    // O marcador simula uma partição de rede. PartitionNode consulta-o para
+    // dados/eleição e TCP; o tópico IN continua acessível aos dois lados.
     public static boolean isolated(int k,int i) { return Files.exists(Path.of("isolar-p"+k+"-n"+i)); }
     public static String in(String s,double t,long l,VectorClock v) { return "IN;"+s+";"+t+";"+l+";"+v; }
     public static String type(String s) { int p=s.indexOf(';'); if(p<1)throw new IllegalArgumentException("Tipo ausente"); return s.substring(0,p); }

@@ -1,5 +1,10 @@
 package raft04;
 import java.util.*;
+/**
+ * LOTE;term;leader;address;port;hb;lastSeq;lastTerm;n, seguido de n registos.
+ * term identifica o líder atual; lastTerm é o termo do último registo local
+ * e pode ser anterior. Um lote vazio continua a anunciar liderança/histórico.
+ */
 public final class Batch {
     public final long term,hb,lastSeq,lastTerm;
     public final int leader,port;
@@ -13,12 +18,16 @@ public final class Batch {
         StringBuilder b=new StringBuilder("LOTE;"+term+";"+leader+";"+address+";"+port+";"+hb+";"+lastSeq+";"+lastTerm+";"+records.size());
         for(SensorRecord r:records)b.append('\n').append(r.toLine());return b.toString();
     }
+    // Usado pelo produtor: valida o cabeçalho sem carregar o corpo.
+    // A lista devolvida fica vazia, mesmo que a mensagem anuncie n > 0.
     public static Batch decodeHeader(String s) {
         String[] f=s.split("\\R",2)[0].split(";",-1);
         if(f.length!=9||!f[0].equals("LOTE"))throw new IllegalArgumentException("Formato LOTE invalido");
         if(Integer.parseInt(f[8])<0)throw new IllegalArgumentException("n negativo");
         return new Batch(Long.parseLong(f[1]),Integer.parseInt(f[2]),f[3],Integer.parseInt(f[4]),Long.parseLong(f[5]),Long.parseLong(f[6]),Long.parseLong(f[7]),List.of());
     }
+    // Aqui n é o número de partições (dimensão do vetor), não a contagem
+    // de registos do cabeçalho. O corpo tem de ser contíguo e acabar em lastSeq.
     public static Batch decode(String s,int n) {
         Batch h=decodeHeader(s);String[] lines=s.split("\\R",-1);
         int count=Integer.parseInt(lines[0].split(";",-1)[8]);

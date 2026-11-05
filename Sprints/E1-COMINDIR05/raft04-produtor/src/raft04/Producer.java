@@ -9,6 +9,11 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Origem de leituras IN e observador dos heartbeats de cada partição.
+ * Publicar com sucesso no Kubo não confirma aceitação ou replicação pelos nós;
+ * produtor.txt permite comparar os envios com os históricos finais.
+ */
 public class Producer {
     static final String DEFAULT_API = Wire.api();
     private static HeartbeatMonitor[] detectors;
@@ -39,6 +44,8 @@ public class Producer {
                 try {
                     pubSub.subscribe(Wire.topicData(partition), message -> {
                         try {
+                            // O produtor só precisa dos metadados do líder e
+                            // do lote; não aplica nem interpreta os registos.
                             Batch header = Batch.decodeHeader(message);
                             int count = Integer.parseInt(message.split("\\R", 2)[0].split(";", -1)[8]);
                             detectors[partition].onHeartbeat(header.term, header.leader, header.hb);
@@ -121,6 +128,8 @@ public class Producer {
                         System.out.println("Temperatura inválida: " + p[1]);
                         continue;
                     }
+                    // Uma leitura externa não traz dependências causais: L/V
+                    // começam em zero. O líder atribui seq, termo e os novos L/V.
                     String message = Wire.in(p[0], temperature, 0L, new VectorClock(partitioner.count()));
                     int k = partitioner.of(p[0]);
                     warn(k, p[0]);
@@ -140,10 +149,13 @@ public class Producer {
         }
     }
 
+    // Uma linha por publicação concluída, tanto manual como em rajada.
+    // O timestamp é capturado antes do HTTP; não é uma confirmação do líder.
     private static synchronized void sent(int k, String sensor, double temperature, long stamp) throws IOException {
         Files.writeString(Path.of("produtor.txt"), stamp+";p"+k+";"+sensor+";"+temperature+System.lineSeparator(), StandardCharsets.UTF_8, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
     }
 
+    // Avisar não bloqueia o envio nem implementa retenção/reenvio automático.
     private static void warn(int k, String sensor) {
         if (detectors[k].state() == HeartbeatMonitor.State.SUSPEITO) {
             System.out.println("AVISO: partição p" + k + " sem líder conhecido; leitura " + sensor + " pode perder-se");
