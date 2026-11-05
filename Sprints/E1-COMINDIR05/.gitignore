@@ -1,0 +1,6 @@
+**/out/
+execucoes/
+ensaios/
+*.txt
+*.tmp
+**/__pycache__/
