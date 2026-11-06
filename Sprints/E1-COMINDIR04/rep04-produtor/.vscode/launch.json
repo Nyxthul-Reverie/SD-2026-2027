@@ -1,0 +1,16 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Produtor",
+      "type": "java",
+      "request": "launch",
+      "mainClass": "rep04.Producer",
+      "args": "3 http://127.0.0.1:5003/api/v0",
+      "cwd": "${workspaceFolder}/../ensaios/sessao-inicial",
+      "console": "integratedTerminal",
+      "vmArgs": "-Drep04.periodo=5000 -Drep04.fator=3 -Drep04.intervalo=10",
+      "javaExec": "C:/Users/alves/.jdks/openjdk-23/bin/java.exe"
+    }
+  ]
+}

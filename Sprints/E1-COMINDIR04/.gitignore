@@ -1,0 +1,5 @@
+**/out/
+ensaios/
+resultados/
+*.txt
+testes/__pycache__/

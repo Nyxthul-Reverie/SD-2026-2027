@@ -1,0 +1,38 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Replica 1",
+      "type": "java",
+      "request": "launch",
+      "mainClass": "rep04.Replica",
+      "args": "1 0,1 5003",
+      "cwd": "${workspaceFolder}/../ensaios/sessao-inicial",
+      "console": "integratedTerminal",
+      "vmArgs": "-Drep04.periodo=5000 -Drep04.fator=3 -Drep04.intervalo=10",
+      "javaExec": "C:/Users/alves/.jdks/openjdk-23/bin/java.exe"
+    },
+    {
+      "name": "Replica 2",
+      "type": "java",
+      "request": "launch",
+      "mainClass": "rep04.Replica",
+      "args": "2 1,2 5003",
+      "cwd": "${workspaceFolder}/../ensaios/sessao-inicial",
+      "console": "integratedTerminal",
+      "vmArgs": "-Drep04.periodo=5000 -Drep04.fator=3 -Drep04.intervalo=10",
+      "javaExec": "C:/Users/alves/.jdks/openjdk-23/bin/java.exe"
+    },
+    {
+      "name": "Replica 3",
+      "type": "java",
+      "request": "launch",
+      "mainClass": "rep04.Replica",
+      "args": "3 0,2 5003",
+      "cwd": "${workspaceFolder}/../ensaios/sessao-inicial",
+      "console": "integratedTerminal",
+      "vmArgs": "-Drep04.periodo=5000 -Drep04.fator=3 -Drep04.intervalo=10",
+      "javaExec": "C:/Users/alves/.jdks/openjdk-23/bin/java.exe"
+    }
+  ]
+}
