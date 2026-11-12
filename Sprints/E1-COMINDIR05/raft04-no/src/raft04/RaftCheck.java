@@ -145,25 +145,53 @@ public final class RaftCheck {
             String[] f=line.split(";");int k=Integer.parseInt(f[0].substring(1)),node=Integer.parseInt(f[1].substring(1));long time=Long.parseLong(f[2]);
             long failedTerm=-1;for(Publication p:hbs)if(p.k==k&&p.node==node&&p.time<=time)failedTerm=p.term;
             Publication next=null;for(Publication p:hbs)if(p.k==k&&p.time>=time&&p.term>failedTerm){next=p;break;}
-            int inWindow=0;for(String s:sent){String[]sf=s.split(";");long st=Long.parseLong(sf[0]);if(sf[1].equals("p"+k)&&st>=time&&(next==null||st<next.time))inWindow++;}
+            List<String> inWindow=new ArrayList<>();
+            for(String s:sent){
+                String[] sf=s.split(";");
+                long st=Long.parseLong(sf[0]);
+                if(sf[1].equals("p"+k)&&st>=time&&(next==null||st<next.time))inWindow.add(s);
+            }
             int lostInWindow=0;for(String s:lostReadings){String[]sf=s.split(";");long st=Long.parseLong(sf[0]);if(sf[1].equals("p"+k)&&st>=time&&(next==null||st<next.time))lostInWindow++;}
-            System.out.println("FALHA;p"+k+";no=n"+node+";instante="+time+";indisponibilidade_ms="+(next==null?"NA":next.time-time)+";enviadas_intervalo="+inWindow+";perdidas_intervalo="+lostInWindow);
+            System.out.println("FALHA;p"+k+";no=n"+node+";instante="+time+";indisponibilidade_ms="+(next==null?"NA":next.time-time)+";enviadas_intervalo="+inWindow.size()+";perdidas_intervalo="+lostInWindow);
+            // Cada linha conserva o instante, a partição, o sensor e a temperatura
+            // publicados pelo produtor, mesmo que a leitura não tenha sido aplicada.
+            for(String s:inWindow)System.out.println("LEITURA_DURANTE_FALHA;"+s);
         }
         // TRUNCADO soma cópias de registos descartados, incluindo alarmes.
         // A contagem de IN normais perdidos por truncagem deduplica essas cópias.
         // Reaparecimento com outro seq usa sensor/temperatura, não um ID global.
         int truncated=0,reappeared=0,lostByTruncation=0;
+        // Cada nó escreve TRUNCADO antes das linhas DESCARTADO do mesmo corte.
+        // Guardar o último corte por nó mantém a associação mesmo com logs intercalados.
+        Map<String,Event> latestTruncation=new HashMap<>();
+        Map<Event,Integer> reappearedByTruncation=new LinkedHashMap<>();
         Set<String> uniqueDiscarded=new HashSet<>();Map<String,Integer> lostCounts=new HashMap<>();
         for(String line:lostReadings){String[] f=line.split(";");lostCounts.merge(Integer.parseInt(f[1].substring(1))+";"+f[2]+";"+Double.parseDouble(f[3]),1,Integer::sum);}
         for(Event e:events){
-            if(e.type.equals("TRUNCADO")){truncated+=Integer.parseInt(e.field("descartados"));System.out.println(e.line);}
+            String source="p"+e.k+"-n"+e.node;
+            if(e.type.equals("TRUNCADO")){
+                truncated+=Integer.parseInt(e.field("descartados"));
+                latestTruncation.put(source,e);
+                reappearedByTruncation.put(e,0);
+            }
             if(e.type.equals("DESCARTADO")){
                 SensorRecord old=SensorRecord.fromLine(e.line.substring(e.line.indexOf("registo=")+8),n);
                 String key=e.k+";"+reading(old);
                 if(!old.getSensorId().startsWith("ALARM-")&&uniqueDiscarded.add(e.k+";"+old.toLine())&&lostCounts.getOrDefault(key,0)>0){lostByTruncation++;lostCounts.put(key,lostCounts.get(key)-1);}
                 Event finalLeader=latestLeader.get(e.k);
-                if(finalLeader!=null)for(SensorRecord r:logs.get("p"+e.k+"-n"+finalLeader.node))if(r.getSeq()!=old.getSeq()&&reading(r).equals(reading(old))){reappeared++;break;}
+                if(finalLeader!=null)for(SensorRecord r:logs.get("p"+e.k+"-n"+finalLeader.node)){
+                    if(r.getSeq()!=old.getSeq()&&reading(r).equals(reading(old))){
+                        reappeared++;
+                        Event truncation=latestTruncation.get(source);
+                        if(truncation!=null)reappearedByTruncation.merge(truncation,1,Integer::sum);
+                        break;
+                    }
+                }
             }
+        }
+        for(Map.Entry<Event,Integer> entry:reappearedByTruncation.entrySet()){
+            Event e=entry.getKey();
+            System.out.println(e.line+";no=n"+e.node+";reaparecidos_outro_seq="+entry.getValue());
         }
         System.out.println("RESUMO;termos="+terms.size()+";votos_divididos="+split+";termos_multiplos_lideres="+unsafe+";regressoes_termo="+regressions+";estados_invalidos="+badStates+";ficheiros_ausentes="+missing+";seq_divergentes="+differences+";comprimentos_diferentes="+lengthDifferences+";enviadas="+sent.size()+";perdidas="+lost+";truncados="+truncated+";reaparecidos_outro_seq="+reappeared+";eventos_monitor="+monitorEvents);
         System.out.println("NOTA: perdas/reaparecimentos usam multiconjunto sensor/temperatura; sem ID de pedido nao distinguem repeticoes identicas. Voto dividido inclui termos observados sem lider no fim da janela. Coincidencia nao prova commit por maioria.");

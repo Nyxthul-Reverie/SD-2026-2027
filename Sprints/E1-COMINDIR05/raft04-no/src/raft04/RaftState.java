@@ -154,7 +154,11 @@ public final class RaftState {
             // Repetir o voto ao mesmo candidato é idempotente, por exemplo
             // quando o mesmo PEDIDO_VOTO volta a ser entregue pela rede.
             votedFor = candidate;
+            // Se o nó reiniciar depois de responder, tem de se lembrar deste voto
+            // para não conceder uma segunda maioria a outro candidato no mesmo termo.
             persist();
+            // Dá ao candidato tempo para reunir a maioria antes de este eleitor
+            // tentar iniciar outra eleição.
             resetTimer();
         }
         log.accept("VOTO;p" + partition + ";termo=" + term + ";candidato=n" + candidate

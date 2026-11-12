@@ -1,4 +1,12 @@
 package raft04;
+
+/**
+ * Resposta de um eleitor a um pedido de voto.
+ * Formato: VOTO;termo;eleitor;candidato;decisão, com S para sim e N para não.
+ * O termo é o termo atual do eleitor. Mesmo uma recusa pode informar o
+ * candidato de um termo superior e fazê-lo regressar ao papel de seguidor.
+ * O identificador do eleitor permite contar cada voto concedido uma só vez.
+ */
 public final class VoteReply {
     public final long term;public final int voter,candidate;public final boolean granted;
     public VoteReply(long t,int v,int c,boolean g){if(t<0)throw new IllegalArgumentException("Termo invalido");term=t;voter=Wire.node(v);candidate=Wire.node(c);granted=g;}

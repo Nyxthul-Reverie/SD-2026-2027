@@ -49,6 +49,8 @@ public final class PartitionNode {
 
     // Um novo líder continua os relógios do histórico que conservou. Começar
     // em zero após uma eleição poderia quebrar V[k]=seq e a ordem de Lamport.
+    // Na promoção, restaura seq, L e V do último registo para continuar a
+    // numeração e os relógios lógicos a partir do histórico já guardado.
     private void restoreClocks(){
         SensorRecord last=file.last();seq=file.lastSeq();
         lamport=last==null?0:last.getLamport();
@@ -117,6 +119,8 @@ public final class PartitionNode {
             }else throw new IllegalArgumentException("Tipo de eleicao invalido");
             demotionCheck();
         }
+        // O voto já foi persistido em RaftState. Publicar fora do lock evita
+        // bloquear a receção de leituras e lotes durante o pedido HTTP.
         if(response!=null)publish(Wire.topicElection(k),response);
     }
 
