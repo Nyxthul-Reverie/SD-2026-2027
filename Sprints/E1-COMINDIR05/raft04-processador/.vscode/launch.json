@@ -1,0 +1,14 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Processador",
+      "type": "java",
+      "request": "launch",
+      "mainClass": "raft04.AlarmProcessor",
+      "args": "3 http://127.0.0.1:5005/api/v0",
+      "cwd": "${workspaceFolder}/../execucoes/manual",
+      "console": "integratedTerminal"
+    }
+  ]
+}

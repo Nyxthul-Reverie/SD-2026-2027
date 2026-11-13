@@ -1,0 +1,61 @@
+{
+  "folders": [
+    {
+      "path": "raft04-no"
+    },
+    {
+      "path": "raft04-produtor"
+    },
+    {
+      "path": "raft04-processador"
+    }
+  ],
+  "launch": {
+    "version": "0.2.0",
+    "configurations": [],
+    "compounds": [
+      {
+        "name": "Nove nos",
+        "configurations": [
+          {
+            "folder": "raft04-no",
+            "name": "p0-n1"
+          },
+          {
+            "folder": "raft04-no",
+            "name": "p0-n2"
+          },
+          {
+            "folder": "raft04-no",
+            "name": "p0-n3"
+          },
+          {
+            "folder": "raft04-no",
+            "name": "p1-n1"
+          },
+          {
+            "folder": "raft04-no",
+            "name": "p1-n2"
+          },
+          {
+            "folder": "raft04-no",
+            "name": "p1-n3"
+          },
+          {
+            "folder": "raft04-no",
+            "name": "p2-n1"
+          },
+          {
+            "folder": "raft04-no",
+            "name": "p2-n2"
+          },
+          {
+            "folder": "raft04-no",
+            "name": "p2-n3"
+          }
+        ],
+        "stopAll": true
+      }
+    ]
+  }
+}
