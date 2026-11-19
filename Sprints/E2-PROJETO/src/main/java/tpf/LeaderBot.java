@@ -48,11 +48,10 @@ public class LeaderBot extends ListenerAdapter {
     @Override
     public void onSlashCommandInteraction(SlashCommandInteractionEvent event){
         var member = event.getMember();
-        var author = event.getAuthor();
         var eventChannel = event.getChannel().getName();
         String channel = eventChannel.trim();
 
-        if(member == null || author.isBot() || !event.isFromGuild() || !channel.equalsIgnoreCase(CHANNEL_NAME) ){
+        if(member == null || !channel.equalsIgnoreCase(CHANNEL_NAME) ){
             return;
         }
 
