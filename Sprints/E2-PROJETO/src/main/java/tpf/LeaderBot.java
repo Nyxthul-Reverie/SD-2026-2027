@@ -51,7 +51,12 @@ public class LeaderBot extends ListenerAdapter {
         var eventChannel = event.getChannel().getName();
         String channel = eventChannel.trim();
 
-        if(member == null || !channel.equalsIgnoreCase(CHANNEL_NAME) ){
+        if(member == null){
+            return;
+        }
+
+        if(!channel.equalsIgnoreCase(CHANNEL_NAME)){
+            event.reply("Usa os comandos no canal #arquivo.").setEphemeral(true).queue();
             return;
         }
 
