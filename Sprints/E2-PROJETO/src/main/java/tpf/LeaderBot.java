@@ -48,7 +48,15 @@ public class LeaderBot extends ListenerAdapter {
     @Override
     public void onSlashCommandInteraction(SlashCommandInteractionEvent event){
         var member = event.getMember();
+        var eventChannel = event.getChannel().getName();
+        String channel = eventChannel.trim();
+
         if(member == null){
+            return;
+        }
+
+        if(!channel.equalsIgnoreCase(CHANNEL_NAME)){
+            event.reply("Usa os comandos no canal #arquivo.").setEphemeral(true).queue();
             return;
         }
 
