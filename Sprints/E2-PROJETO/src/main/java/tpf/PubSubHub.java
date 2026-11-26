@@ -219,7 +219,7 @@ public final class PubSubHub extends WebSocketServer {
             sessao.chave = chave(campos[2]);
             sessao.token = campos[3];
         } else {
-            if (campos.length == 4 && !conhecida.equals(chave(campos[2]))) {
+            if (campos.length != 2) {
                 throw new IllegalArgumentException();
             }
             sessao.chave = conhecida;

@@ -91,8 +91,9 @@ public final class ReplicaService implements AutoCloseable {
 
     private void cicloDeLigacoes() throws InterruptedException {
         long espera = Wire.BACKOFF_MIN_MS;
+        boolean enviarToken = true;
         while (parar.getCount() > 0) {
-            var ligacao = new Ligacao();
+            var ligacao = new Ligacao(enviarToken ? token : null);
             atual = ligacao;
             if (parar.getCount() == 0) {
                 atual = null;
@@ -112,6 +113,11 @@ public final class ReplicaService implements AutoCloseable {
             }
             if (parar.getCount() == 0) {
                 return;
+            }
+            // Se a ligação falhar entre a PROVA e o pong, o hub pode já ter
+            // consumido o token. Testar OLA simples permite retomar esse registo.
+            if (token != null && ligacao.olaEnviado) {
+                enviarToken = !enviarToken;
             }
             evento("RELIGAR " + espera);
             parar.await(espera, TimeUnit.MILLISECONDS);
@@ -179,11 +185,17 @@ public final class ReplicaService implements AutoCloseable {
     private final class Ligacao implements WebSocket.Listener {
         private final CompletableFuture<Boolean> fim = new CompletableFuture<>();
         private final StringBuilder mensagem = new StringBuilder();
+        private final String tokenDeRegisto;
         private WebSocket socket;
         private ScheduledFuture<?> limite;
         private ScheduledFuture<?> heartbeats;
         private boolean provaEnviada;
         private boolean ligada;
+        private boolean olaEnviado;
+
+        Ligacao(String tokenDeRegisto) {
+            this.tokenDeRegisto = tokenDeRegisto;
+        }
 
         @Override
         public synchronized void onOpen(WebSocket ws) {
@@ -196,11 +208,11 @@ public final class ReplicaService implements AutoCloseable {
                 limite = temporizador.schedule(() -> falhar("tempo limite de autenticação"),
                         TIMEOUT_LIGACAO.toMillis(), TimeUnit.MILLISECONDS);
                 String ola = "OLA;" + id;
-                String registo = token;
-                if (registo != null) {
+                if (tokenDeRegisto != null) {
                     ola += ";" + Base64.getEncoder().encodeToString(chaves.getPublic().getEncoded())
-                            + ";" + registo;
+                            + ";" + tokenDeRegisto;
                 }
+                olaEnviado = true;
                 enviar(ola);
                 ws.request(1);
             } catch (RuntimeException e) {

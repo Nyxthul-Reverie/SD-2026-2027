@@ -19,7 +19,7 @@ public final class Wire {
     public static final int W_MIN = positive("tpf.wMin", 2);
     public static final int ACK_TIMEOUT_MS = positive("tpf.ackTimeoutMs", 4_000);
     public static final int MAX_RONDAS = positive("tpf.maxRondas", 3);
-    public static final long MARGEM_BYTES = Long.getLong("tpf.margemBytes", 65_536L);
+    public static final long MARGEM_BYTES = Long.parseLong(System.getProperty("tpf.margemBytes", "65536"));
     public static final double ALFA = Double.parseDouble(System.getProperty("tpf.alfa", "1.0"));
     public static final int BACKOFF_MIN_MS = positive("tpf.backoffMinMs", 1_000);
     public static final int BACKOFF_MAX_MS = positive("tpf.backoffMaxMs", 30_000);
