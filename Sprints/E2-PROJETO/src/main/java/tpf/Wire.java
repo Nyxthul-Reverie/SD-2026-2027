@@ -1,9 +1,9 @@
 package tpf;
 
 public final class Wire {
-    public static final int CHUNK_MAX_BYTES = positive("tpf.chunkMax", 65_536); // max bypes / chunk
-    public static final int PAD_BYTES = positive("tpf.pad", 4_096); // zeros
-    public static final int SELAGEM_MS = positive("tpf.selagem", 5_000);
+    public static final int CHUNK_MAX_BYTES = positive("tpf.chunkMax", 65_536); // max bypes per chunk antes da selagem
+    public static final int PAD_BYTES = positive("tpf.pad", 4_096); // zeros -> pading
+    public static final int SELAGEM_MS = positive("tpf.selagem", 5_000); // tempo de 
 
     private Wire() {
 
