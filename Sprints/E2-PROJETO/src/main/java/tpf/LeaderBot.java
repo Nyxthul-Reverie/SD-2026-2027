@@ -10,8 +10,11 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.nio.file.Path;
 import java.security.GeneralSecurityException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -26,10 +29,12 @@ public class LeaderBot extends ListenerAdapter {
 
     private final ArquivoLocal arquivo;
     private final ScheduledExecutorService tarefas;
+    private final EscritaReplicada replicacao;
 
-    private LeaderBot(ArquivoLocal arquivo, ScheduledExecutorService tarefas) {
+    private LeaderBot(ArquivoLocal arquivo, ScheduledExecutorService tarefas, EscritaReplicada replicacao) {
         this.arquivo = arquivo;
         this.tarefas = tarefas;
+        this.replicacao = replicacao;
     }
 
     public static void main(String[] args) throws InterruptedException, IOException, GeneralSecurityException {
@@ -44,11 +49,14 @@ public class LeaderBot extends ListenerAdapter {
         }
         ScheduledExecutorService tarefas = Executors.newSingleThreadScheduledExecutor();
         JDA jda = null;
+        EscritaReplicada replicacao = null;
         Guild guild;
         try {
             Path dados = Path.of(System.getProperty("tpf.dados", "dados-lider"));
-            ArquivoLocal arquivo = new ArquivoLocal(dados, tarefas);
-            LeaderBot bot = new LeaderBot(arquivo, tarefas);
+            replicacao = new EscritaReplicada(dados, new InetSocketAddress(Wire.PORTO));
+            replicacao.iniciar();
+            ArquivoLocal arquivo = new ArquivoLocal(dados, tarefas, replicacao::selado);
+            LeaderBot bot = new LeaderBot(arquivo, tarefas, replicacao);
             jda = JDABuilder.createDefault(token).enableIntents(GatewayIntent.MESSAGE_CONTENT)
                     .addEventListeners(bot).build();
             jda.awaitReady();
@@ -62,8 +70,19 @@ public class LeaderBot extends ListenerAdapter {
             if(jda != null){
                 jda.shutdownNow();
             }
+            if (replicacao != null) {
+                replicacao.close();
+            }
             throw e;
         }
+
+        JDA clienteDiscord = jda;
+        EscritaReplicada servidor = replicacao;
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            clienteDiscord.shutdownNow();
+            tarefas.shutdownNow();
+            servidor.close();
+        }));
 
         guild.upsertCommand("estado", "Mostra o estado do líder").queue();
         guild.upsertCommand("registar", "Registar").addOption(OptionType.STRING, "texto", "texto a registar", true).queue();
@@ -73,7 +92,7 @@ public class LeaderBot extends ListenerAdapter {
         guild.upsertCommand("replica-remover", "Remover replica").addOption(OptionType.STRING, "id", "Identificador da Réplica", true).queue();
         guild.upsertCommand("rajada", "Modo rajada").addOption(OptionType.INTEGER, "n", "Número de Registos", true).addOption(OptionType.INTEGER, "intervalo-ms", "Intervalo em milissegundos", true).queue();
 
-        System.out.println("Bot Online.\n Name: " + jda.getSelfUser().getName());
+        System.out.println("Bot Online. WebSocket na porta " + servidor.porto());
     }
 
     @Override
@@ -105,7 +124,9 @@ public class LeaderBot extends ListenerAdapter {
             return;
         }
         switch(command) {
-            case "estado", "replica-token" -> event.reply("`/" + command + "` recebido - ainda nao implementado.").queue();
+            case "estado" -> handleEstado(event);
+            case "replica-token" -> event.reply("Token de utilização única: `" + replicacao.gerarToken()
+                    + "`\nValidade: " + Wire.TOKEN_VALIDADE_MS / 1000.0 + " s.").setEphemeral(true).queue();
             case "rajada" -> handleRajada(event);
             case "config" -> handleConfig(event);
             case "registar" -> handleRegistar(event); 
@@ -113,6 +134,30 @@ public class LeaderBot extends ListenerAdapter {
             case "replica-remover" -> handleReplicaRemover(event);
             default -> event.reply("Comando desconhecido.").queue();
         }
+    }
+
+    private void handleEstado(SlashCommandInteractionEvent event) {
+        event.deferReply().queue(hook -> replicacao.estado().whenComplete((linhas, erro) -> {
+            if (erro != null) {
+                hook.editOriginal("Estado do arquivo indisponível.").queue();
+                return;
+            }
+            List<String> paginas = new ArrayList<>();
+            StringBuilder pagina = new StringBuilder();
+            for (String linha : linhas) {
+                if (pagina.length() + linha.length() + 1 > 2000) {
+                    paginas.add(pagina.toString());
+                    pagina.setLength(0);
+                }
+                pagina.append(linha).append('\n');
+            }
+            paginas.add(pagina.toString());
+            hook.editOriginal(paginas.get(0)).queue(original -> {
+                for (int i = 1; i < paginas.size(); i++) {
+                    hook.sendMessage(paginas.get(i)).queue();
+                }
+            });
+        }));
     }
 
     private void handleRegistar(SlashCommandInteractionEvent event){
@@ -196,12 +241,17 @@ public class LeaderBot extends ListenerAdapter {
 
         String id = option.getAsString().trim();
 
-        if(id.isBlank()){
-            event.reply("Argumento inválido: `id` não pode estar vazio.").setEphemeral(true).queue();
+        if (!Wire.idValido(id)) {
+            event.reply("Identificador inválido. Usa letras, algarismos, hífen ou underscore.")
+                    .setEphemeral(true).queue();
             return;
         }
 
-        event.reply("`/replica-remover` recebido: id=\"" + id + "\" - ainda não implementado.").queue();
+        event.deferReply(true).queue(hook -> replicacao.remover(id).whenComplete((removida, erro) -> {
+            String resposta = erro != null ? "Não foi possível remover a réplica."
+                    : removida ? "Réplica removida: " + id : "Réplica desconhecida: " + id;
+            hook.editOriginal(resposta).queue();
+        }));
 
     }
 

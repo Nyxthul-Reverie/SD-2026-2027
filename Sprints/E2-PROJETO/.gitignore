@@ -1,5 +1,11 @@
 .clawdea/REPO_STATE.md
 .env
 master.key
-/target/
+target/
 /dados-lider/
+dados-*/
+eventos-*.txt
+registos.log
+catalogo.txt
+replicas.txt
+*.pk8

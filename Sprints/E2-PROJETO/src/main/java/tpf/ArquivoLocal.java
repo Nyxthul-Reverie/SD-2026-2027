@@ -1,18 +1,11 @@
 package tpf;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
-import java.nio.file.attribute.AclEntry;
-import java.nio.file.attribute.AclEntryPermission;
-import java.nio.file.attribute.AclEntryType;
-import java.nio.file.attribute.FileAttribute;
-import java.nio.file.attribute.PosixFilePermissions;
 import java.security.GeneralSecurityException;
 import java.security.SecureRandom;
 import java.util.ArrayList;
@@ -21,24 +14,38 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 public final class ArquivoLocal {
+    record ChunkSelado(String id, long lsnDe, long lsnAte, long tamanho) {
+    }
+
+    private record ChunkVerificado(ChunkSelado meta, List<Registo> registos) {
+    }
+
     private final Path log;
     private final Path eventos;
     private final Path selados;
     private final ChunkCrypto crypto;
     private final ScheduledExecutorService temporizador;
+    private final Consumer<ChunkSelado> aoSelar;
     private Chunk aberto;
     private long ultimoLsn;
     private IOException falha;
 
     public ArquivoLocal(Path pasta, ScheduledExecutorService temporizador)
             throws IOException, GeneralSecurityException {
+        this(pasta, temporizador, chunk -> { });
+    }
+
+    ArquivoLocal(Path pasta, ScheduledExecutorService temporizador, Consumer<ChunkSelado> aoSelar)
+            throws IOException, GeneralSecurityException {
         Files.createDirectories(pasta);
         log = pasta.resolve("registos.log");
         eventos = pasta.resolve("eventos-lider.txt");
         selados = Files.createDirectories(pasta.resolve("selados"));
         this.temporizador = temporizador;
+        this.aoSelar = aoSelar;
 
         List<Registo> anteriores = lerLog();
         Path chave = pasta.resolve("master.key");
@@ -106,46 +113,26 @@ public final class ArquivoLocal {
         try {
             Sealed sealed = crypto.seal(chunk.selar());
             byte[] bytes = sealed.cifrado();
-            publicar(selados.resolve(sealed.id() + ".bin"), bytes);
-            publicar(selados.resolve(sealed.id() + ".hdr"),
+            ArquivosAtomicos.publicar(selados.resolve(sealed.id() + ".bin"), bytes);
+            ArquivosAtomicos.publicar(selados.resolve(sealed.id() + ".hdr"),
                     (sealed.cabecalho() + "\n").getBytes(StandardCharsets.US_ASCII));
             evento("SELADO", "chunkId=" + sealed.id() + ",de=" + chunk.primeiroLsn()
                     + ",ate=" + chunk.ultimoLsn() + ",bytes=" + bytes.length);
             aberto = null;
+            aoSelar.accept(new ChunkSelado(sealed.id(), chunk.primeiroLsn(), chunk.ultimoLsn(), bytes.length));
         } catch (GeneralSecurityException e) {
             throw new IOException("Falha ao cifrar o chunk.", e);
         }
     }
 
     private void evento(String tipo, String detalhe) throws IOException {
-        Files.writeString(eventos, System.currentTimeMillis() + ";" + tipo + ";" + detalhe + "\n",
-                StandardCharsets.UTF_8, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+        ArquivosAtomicos.evento(eventos, tipo + ";" + detalhe);
     }
 
     private static void appendDuravel(Path path, String linha) throws IOException {
         try (FileChannel out = FileChannel.open(path, StandardOpenOption.CREATE,
                 StandardOpenOption.WRITE, StandardOpenOption.APPEND)) {
-            escreverTudo(out, linha.getBytes(StandardCharsets.UTF_8));
-        }
-    }
-
-    private static void escreverTudo(FileChannel out, byte[] bytes) throws IOException {
-        ByteBuffer pendente = ByteBuffer.wrap(bytes);
-        while (pendente.hasRemaining()) {
-            out.write(pendente);
-        }
-        out.force(true);
-    }
-
-    private static void publicar(Path destino, byte[] bytes) throws IOException {
-        Path tmp = Files.createTempFile(destino.getParent(), ".selar-", ".tmp");
-        try {
-            try (FileChannel out = FileChannel.open(tmp, StandardOpenOption.WRITE)) {
-                escreverTudo(out, bytes);
-            }
-            Files.move(tmp, destino, StandardCopyOption.ATOMIC_MOVE);
-        } finally {
-            Files.deleteIfExists(tmp);
+            ArquivosAtomicos.escreverTudo(out, linha.getBytes(StandardCharsets.UTF_8));
         }
     }
 
@@ -183,23 +170,29 @@ public final class ArquivoLocal {
     }
 
     private long verificarChunks(List<Registo> logLido) throws IOException, GeneralSecurityException {
-        List<List<Registo>> chunks = new ArrayList<>();
+        List<ChunkVerificado> chunks = new ArrayList<>();
         try (var ficheiros = Files.list(selados)) {
             for (Path hdr : ficheiros.filter(p -> p.toString().endsWith(".hdr")).toList()) {
                 String nome = hdr.getFileName().toString();
-                chunks.add(abrir(selados, nome.substring(0, nome.length() - 4), crypto));
+                String id = nome.substring(0, nome.length() - 4);
+                List<Registo> registos = abrir(selados, id, crypto);
+                var meta = new ChunkSelado(id, registos.get(0).lsn(), registos.get(registos.size() - 1).lsn(),
+                        Files.size(selados.resolve(id + ".bin")));
+                chunks.add(new ChunkVerificado(meta, registos));
             }
         }
-        chunks.sort(Comparator.comparingLong(lista -> lista.get(0).lsn()));
+        chunks.sort(Comparator.comparingLong(chunk -> chunk.meta().lsnDe()));
         int posicao = 0;
-        for (List<Registo> chunk : chunks) {
-            for (Registo registo : chunk) {
+        for (ChunkVerificado chunk : chunks) {
+            for (Registo registo : chunk.registos()) {
                 if (posicao >= logLido.size() || !registo.equals(logLido.get(posicao))) {
                     throw new IOException("Chunks e registos.log divergem no LSN " + (posicao + 1));
                 }
                 posicao++;
             }
         }
+        // Inclui chunks do E2-02 ainda sem entrada no catálogo.
+        chunks.forEach(chunk -> aoSelar.accept(chunk.meta()));
         return posicao;
     }
 
@@ -229,8 +222,8 @@ public final class ArquivoLocal {
             new SecureRandom().nextBytes(nova);
             try (FileChannel out = FileChannel.open(path,
                     EnumSet.of(StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE),
-                    permissoesDaChave(path.getParent()))) {
-                escreverTudo(out, nova);
+                    ArquivosAtomicos.permissoesDaChave(path.getParent()))) {
+                ArquivosAtomicos.escreverTudo(out, nova);
             }
         }
         byte[] chave = Files.readAllBytes(path);
@@ -240,28 +233,4 @@ public final class ArquivoLocal {
         return chave;
     }
 
-    private static FileAttribute<?> permissoesDaChave(Path pasta) throws IOException {
-        var store = Files.getFileStore(pasta);
-        if (store.supportsFileAttributeView("posix")) {
-            return PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rw-------"));
-        }
-        if (store.supportsFileAttributeView("acl")) {
-            var dono = pasta.getFileSystem().getUserPrincipalLookupService()
-                    .lookupPrincipalByName(System.getProperty("user.name"));
-            var entrada = AclEntry.newBuilder().setType(AclEntryType.ALLOW).setPrincipal(dono)
-                    .setPermissions(EnumSet.allOf(AclEntryPermission.class)).build();
-            return new FileAttribute<List<AclEntry>>() {
-                @Override
-                public String name() {
-                    return "acl:acl";
-                }
-
-                @Override
-                public List<AclEntry> value() {
-                    return List.of(entrada);
-                }
-            };
-        }
-        throw new IOException("A pasta de dados tem de suportar permissões POSIX ou ACL.");
-    }
 }
