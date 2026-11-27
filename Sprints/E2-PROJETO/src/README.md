@@ -1,110 +1,63 @@
-# TPF Líder — Sprint E2-01
+# TPF Líder · Sprint E2-02
 
-Aplicação Java que implementa a base do bot líder do arquivo distribuído, utilizando a biblioteca JDA para comunicar com o Discord.
+Bot Java 17+ que utiliza a JDA para registar mensagens e produzir chunks cifrados
+no disco local. Requer Maven, um bot convidado para o servidor de teste, o intent
+**Message Content**, o canal `#arquivo` e o papel `admin-arquivo` para administradores.
 
-Nesta sprint, os comandos são registados, os argumentos são validados e o bot devolve respostas provisórias. As funcionalidades reais de registo, cifra, replicação e recuperação ainda não estão implementadas.
+Na pasta do `pom.xml`, configura `DISCORD_TOKEN` e `DISCORD_GUILD_ID` nas variáveis
+de ambiente ou num ficheiro `.env`. Compila e arranca assim.
 
-## Pré-requisitos
-
-- Java 17 ou superior
-- Apache Maven
-- Aplicação e bot criados no Discord Developer Portal
-- Bot adicionado ao servidor de teste
-- **Message Content Intent** ativado no Discord Developer Portal
-
-## Configuração do Discord
-
-O servidor deve possuir:
-
-- um canal de texto chamado `#arquivo`;
-- um papel chamado `admin-arquivo`.
-
-O papel `admin-arquivo` deve ser atribuído aos membros autorizados a executar os comandos administrativos.
-
-## Configuração das variáveis
-
-Na raiz do projeto, criar um ficheiro `.env`:
-
-```env
-DISCORD_TOKEN=TOKEN_DO_BOT
-DISCORD_GUILD_ID=ID_DO_SERVIDOR
+```powershell
+mvn clean package
+java -jar target/tpf-lider-1.0-SNAPSHOT.jar
 ```
 
-Substituir os valores pelos dados reais do bot e do servidor.
+O caminho de dados por omissão é `dados-lider`. Em Windows, se o projeto estiver
+num volume sem ACL, especifica uma pasta privada em NTFS, por exemplo assim.
 
-> O ficheiro `.env` contém informação sensível e não deve ser enviado para o repositório. Está incluído no `.gitignore`.
-
-Para obter o ID do servidor:
-
-1. Ativar o **Modo de programador** nas definições avançadas do Discord.
-2. Clicar com o botão direito no servidor.
-3. Selecionar **Copiar ID do servidor**.
-
-## Compilar
-
-Na raiz do projeto, executar:
-
-```bash
-mvn clean compile
+```powershell
+java "-Dtpf.dados=$env:LOCALAPPDATA\SDT-E2-02" -jar target/tpf-lider-1.0-SNAPSHOT.jar
 ```
 
-## Executar
+Mantém uma única instância do líder por pasta de dados. Em cada reinício usa a
+mesma pasta e conserva a chave original. Podes ajustar os valores de selagem com
+`-Dtpf.chunkMax=65536`, `-Dtpf.pad=4096` e `-Dtpf.selagem=5000`
+antes de `-jar`.
 
-```bash
-mvn exec:java -Dexec.mainClass=tpf.LeaderBot
+## Escrita
+
+- `/registar texto:<texto>` e mensagens humanas em `#arquivo` escrevem em
+  `registos.log`. Cada linha é `lsn;instante;autor;canal;textoBase64`, em UTF-8
+  com LF. O instante é Unix em milissegundos. Autor e canal são IDs Discord.
+- A confirmação com LSN segue `FileChannel.force(true)`. O LSN seguinte parte do
+  último registo completo e cresce a partir de 1.
+- `/rajada n:<n> intervalo-ms:<ms>` (papel `admin-arquivo`) injeta registos
+  sintéticos pelo mesmo caminho e indica quando aceitou o pedido. Acompanhe
+  `eventos-lider.txt` para ver as escritas e selagens.
+- `/estado`, `/config`, `/recuperar`, `/replica-token` e `/replica-remover`
+  dão respostas provisórias.
+
+## Formatos
+
+O conteúdo antes de cifrar usa ordem big-endian. Começa com um inteiro de 4
+bytes que indica quantos registos se seguem. Cada registo tem quatro inteiros
+de 8 bytes (`lsn`, `instante`, `autor`, `canal`), um inteiro de 4 bytes com o
+comprimento do texto em bytes e, a seguir, o texto em UTF-8. Depois do último
+registo são acrescentados zeros até ao próximo múltiplo de `PAD_BYTES`, se
+necessário. O leitor usa a contagem e os comprimentos para ignorar esse padding.
+
+O `.bin` contém o texto cifrado e, no fim, a tag GCM de 16 bytes. O nome base
+é o SHA-256 hexadecimal de todo o `.bin`. O `.hdr` associado tem esse mesmo
+nome base e contém `keyVersion;base64(salt);base64(nonce)` seguido de LF.
+A versão é 1. O salt tem 32 bytes e o nonce tem 12. A chave do chunk vem de
+HKDF-SHA256. A AAD é `tpf-v1` em ASCII, seguida da versão de 4 bytes big-endian,
+do salt e do nonce.
+
+No log de eventos, `REGISTO` indica o LSN e `SELADO` identifica o chunk, o
+intervalo de LSN e o tamanho do `.bin`.
+
+## Testes
+
+```powershell
+mvn test
 ```
-
-O bot permanece online enquanto a aplicação Java estiver em execução. Para terminar, utilizar `Ctrl+C`.
-
-## Comandos disponíveis
-
-### Comandos gerais
-
-- `/estado`
-- `/registar texto:<texto>`
-- `/recuperar de:<id> ate:<id>`
-
-### Comandos administrativos
-
-Os seguintes comandos exigem o papel `admin-arquivo`:
-
-- `/config r:<número>`
-- `/replica-token`
-- `/replica-remover id:<identificador>`
-- `/rajada n:<número> intervalo-ms:<milissegundos>`
-
-## Validações
-
-A aplicação valida, entre outros, os seguintes casos:
-
-- `texto` não pode estar vazio;
-- `r` tem de ser maior que zero;
-- `de` e `ate` não podem ser negativos;
-- `de` tem de ser menor ou igual a `ate`;
-- `id` não pode estar vazio;
-- `n` tem de ser maior que zero;
-- `intervalo-ms` não pode ser negativo;
-- comandos administrativos são recusados a membros sem o papel `admin-arquivo`.
-
-## Canal `#arquivo`
-
-O bot deteta mensagens enviadas no canal `#arquivo` e devolve uma resposta provisória.
-
-São ignoradas:
-
-- mensagens enviadas por bots;
-- mensagens privadas;
-- mensagens enviadas noutros canais.
-
-## Estado atual
-
-Esta sprint implementa apenas a base e a interface do líder.
-
-Ainda não estão implementadas as funcionalidades reais de:
-
-- registo no arquivo;
-- cifra;
-- gestão de réplicas;
-- geração real de tokens;
-- recuperação de registos;
-- execução de rajadas.

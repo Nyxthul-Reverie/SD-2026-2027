@@ -9,14 +9,30 @@ import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEve
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.security.GeneralSecurityException;
 import java.util.Set;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class LeaderBot extends ListenerAdapter {
     private static final Set<String> ADMIN_COMMANDS = Set.of("config", "replica-token", "replica-remover", "rajada");
     private static final String ADMIN_ROLE = "admin-arquivo";
     private static final String CHANNEL_NAME = "arquivo";
 
-    public static void main(String[] args) throws InterruptedException {
+    private static final String TEXTO_SINTETICO = "0123456789abcdef".repeat(24);
+
+    private final ArquivoLocal arquivo;
+    private final ScheduledExecutorService tarefas;
+
+    private LeaderBot(ArquivoLocal arquivo, ScheduledExecutorService tarefas) {
+        this.arquivo = arquivo;
+        this.tarefas = tarefas;
+    }
+
+    public static void main(String[] args) throws InterruptedException, IOException, GeneralSecurityException {
         Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
         String token = dotenv.get("DISCORD_TOKEN");
         String guildId = dotenv.get("DISCORD_GUILD_ID");
@@ -26,12 +42,27 @@ public class LeaderBot extends ListenerAdapter {
         } else if(guildId == null || guildId.isBlank()){
             throw new IllegalStateException("O id da Guild não está definido.");
         }
-        JDA jda = JDABuilder.createDefault(token).enableIntents(GatewayIntent.MESSAGE_CONTENT).addEventListeners(new LeaderBot()).build();
-        jda.awaitReady();
+        ScheduledExecutorService tarefas = Executors.newSingleThreadScheduledExecutor();
+        JDA jda = null;
+        Guild guild;
+        try {
+            Path dados = Path.of(System.getProperty("tpf.dados", "dados-lider"));
+            ArquivoLocal arquivo = new ArquivoLocal(dados, tarefas);
+            LeaderBot bot = new LeaderBot(arquivo, tarefas);
+            jda = JDABuilder.createDefault(token).enableIntents(GatewayIntent.MESSAGE_CONTENT)
+                    .addEventListeners(bot).build();
+            jda.awaitReady();
 
-        Guild guild = jda.getGuildById(guildId);
-        if(guild == null){
-            throw new IllegalStateException("O bot não encontrou o servidor indicado.");
+            guild = jda.getGuildById(guildId);
+            if(guild == null){
+                throw new IllegalStateException("O bot não encontrou o servidor indicado.");
+            }
+        } catch (IOException | GeneralSecurityException | InterruptedException | RuntimeException e) {
+            tarefas.shutdownNow();
+            if(jda != null){
+                jda.shutdownNow();
+            }
+            throw e;
         }
 
         guild.upsertCommand("estado", "Mostra o estado do líder").queue();
@@ -99,7 +130,17 @@ public class LeaderBot extends ListenerAdapter {
             return;
         }
 
-        event.reply("`/registar` recebido: texto=\"" + text + "\" - ainda não implementado.").queue();
+        long autor = event.getUser().getIdLong();
+        long canal = event.getChannel().getIdLong();
+        event.deferReply().queue(hook -> tarefas.execute(() -> {
+            try {
+                long lsn = arquivo.registar(autor, canal, text);
+                hook.editOriginal("Registo guardado localmente. LSN " + lsn + ".").queue();
+            } catch (IOException e) {
+                System.err.println("Falha no registo: " + e.getMessage());
+                hook.editOriginal("Não foi possível confirmar o registo.").queue();
+            }
+        }));
     }
 
     private void handleConfig(SlashCommandInteractionEvent event){
@@ -186,7 +227,23 @@ public class LeaderBot extends ListenerAdapter {
             return;
         }
 
-        event.reply("`/rajada` recebido: n=" + n + ", intervaloMs=" + ms + " - ainda não implementado.").queue();
+        long autor = event.getUser().getIdLong();
+        long canal = event.getChannel().getIdLong();
+        event.reply("Rajada aceite. Consulta os eventos para acompanhar os registos.")
+                .setEphemeral(true)
+                .queue(hook -> tarefas.execute(() -> passoRajada(autor, canal, n, ms, 1)));
+    }
+
+    private void passoRajada(long autor, long canal, long n, long intervalo, long passo) {
+        try {
+            arquivo.registar(autor, canal, "rajada " + passo + "/" + n + " " + TEXTO_SINTETICO);
+            if (passo < n) {
+                tarefas.schedule(() -> passoRajada(autor, canal, n, intervalo, passo + 1),
+                        intervalo, TimeUnit.MILLISECONDS);
+            }
+        } catch (IOException e) {
+            System.err.println("Rajada interrompida no registo " + passo + ": " + e.getMessage());
+        }
     }
 
     @Override
@@ -201,6 +258,14 @@ public class LeaderBot extends ListenerAdapter {
 
         String mensagem = event.getMessage().getContentRaw();
 
-        event.getMessage().reply("Mensagem recebida: " + mensagem).queue();
+        tarefas.execute(() -> {
+            try {
+                long lsn = arquivo.registar(author.getIdLong(), event.getChannel().getIdLong(), mensagem);
+                event.getMessage().reply("Registo guardado localmente. LSN " + lsn + ".").queue();
+            } catch (IOException e) {
+                System.err.println("Falha no registo: " + e.getMessage());
+                event.getMessage().reply("Não foi possível confirmar o registo.").queue();
+            }
+        });
     }
 }
